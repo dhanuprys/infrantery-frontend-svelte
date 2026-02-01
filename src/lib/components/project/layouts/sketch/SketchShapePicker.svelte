@@ -1,25 +1,29 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
 	import { Separator } from '$lib/components/ui/separator';
-	import { type Icon as IconType, ScrollIcon, ServerIcon, TextCursorIcon } from '@lucide/svelte';
+	import { diagramStore } from '$lib/stores/diagramStore.svelte';
+	import { shapes, type Shape } from '$lib/data/shapes';
 
-	interface Shape {
-		type: string;
-		icon: typeof IconType;
-		label: string;
+	function addNode(type: string, data?: any) {
+		const { x: lastX, y: lastY } = diagramStore.lastClickPosition;
+		diagramStore.setNodes([
+			...diagramStore.nodes,
+			{
+				id: (diagramStore.nodes.length + 1).toString(),
+				type,
+				position: { x: lastX, y: lastY },
+				data: { label: 'Node ' + (diagramStore.nodes.length + 1), ...data }
+			}
+		]);
+
+		// avoid last click position to be same as the node position
+		diagramStore.setLastClickPosition({ x: lastX + 10, y: lastY + 10 });
 	}
-
-	const shapes = [
-		{ type: 'text', icon: TextCursorIcon, label: 'Text' },
-		{ type: 'image', icon: ServerIcon, label: 'Node' },
-		{ type: 'comment', icon: ScrollIcon, label: 'Comment' }
-	];
 </script>
 
 {#snippet shapeButton(shape: Shape)}
 	<button
 		type="button"
-		onclick={() => console.log(shape.type)}
+		onclick={() => addNode(shape.type, shape.data)}
 		class="apsect-square flex aspect-square! w-full cursor-pointer flex-col items-center justify-center py-1"
 	>
 		<shape.icon class="size-5" />

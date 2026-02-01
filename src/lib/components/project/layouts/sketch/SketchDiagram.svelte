@@ -3,86 +3,90 @@
 		Background,
 		BackgroundVariant,
 		Controls,
-		MarkerType,
+		getConnectedEdges,
+		getIncomers,
+		getOutgoers,
 		SvelteFlow,
+		useSvelteFlow,
 		type Edge,
-		type Node
+		type Node,
+		type OnBeforeDelete
 	} from '@xyflow/svelte';
-	import ImageNode from '$lib/components/project/digrams/nodes/ImageNode.svelte';
-	import * as Resizable from '$lib/components/ui/resizable';
 	import '@xyflow/svelte/dist/style.css';
 	import { mode } from 'mode-watcher';
-	import * as Sketch from '$lib/components/project/layouts/sketch';
-	import Header from '$lib/components/project/layouts/Header.svelte';
-
-	let nodeTypes = {
-		image: ImageNode
-	};
-
-	let nodes = $state.raw<Node[]>([
-		{
-			id: '1',
-			position: { x: 0, y: 0 },
-			data: { label: 'Node 1' }
-		},
-		{
-			id: '2',
-			position: { x: 100, y: 100 },
-			data: { label: 'Node 2' }
-		},
-		{
-			id: '3',
-			type: 'image',
-			position: { x: 200, y: 200 },
-			data: {
-				src: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTu8_n2ixd2W0hk9RHg681_JQPd1b87ttC_A&s',
-				alt: 'Node 3'
-			}
-		},
-		{
-			id: '4',
-			type: 'image',
-			position: { x: 240, y: 240 },
-			data: {
-				src: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRTu8_n2ixd2W0hk9RHg681_JQPd1b87ttC_A&s',
-				alt: 'Node 4'
-			}
-		}
-	]);
-
-	let edges = $state.raw<Edge[]>([
-		{
-			id: '1',
-			source: '1',
-			target: '2',
-			type: 'smoothstep',
-			label: 'in to',
-			markerStart: {
-				type: MarkerType.Arrow
-			}
-		},
-		{
-			id: '2',
-			source: '2',
-			target: '3',
-			type: 'smoothstep'
-		}
-	]);
+	import { diagramStore } from '$lib/stores/diagramStore.svelte';
+	import { nodeTypes } from '$lib/data/node-types';
 
 	let colorMode = $derived(mode.current || 'light');
-	let variant = $state(BackgroundVariant.Dots);
+	const { screenToFlowPosition } = useSvelteFlow();
+
+	const onbeforedelete: OnBeforeDelete = async ({ nodes: deletedNodes, edges: _edges }) => {
+		let remainingNodes = [...diagramStore.nodes];
+
+		diagramStore.setEdges(
+			deletedNodes.reduce((acc, node) => {
+				const incomers = getIncomers(node, remainingNodes, acc);
+				const outgoers = getOutgoers(node, remainingNodes, acc);
+				const connectedEdges = getConnectedEdges([node], acc);
+
+				const remainingEdges = acc.filter((edge) => !connectedEdges.includes(edge));
+
+				const createdEdges = incomers.flatMap(({ id: source }) =>
+					outgoers.map(({ id: target }) => ({
+						id: `${source}->${target}`,
+						source,
+						target
+					}))
+				);
+
+				remainingNodes = remainingNodes.filter((rn) => rn.id !== node.id);
+
+				return [...remainingEdges, ...createdEdges];
+			}, diagramStore.edges)
+		);
+
+		diagramStore.setNodes(remainingNodes);
+
+		return true;
+	};
+
+	function handlePaneClick(e: any) {
+		const clientX = e.event.clientX;
+		const clientY = e.event.clientY;
+
+		const flowPosition = screenToFlowPosition({ x: clientX, y: clientY });
+		diagramStore.setLastClickPosition(flowPosition);
+
+		diagramStore.setActiveObject(null);
+	}
+
+	function handleNodeClick(e: { node: Node }) {
+		diagramStore.setActiveObject({
+			type: 'node',
+			target: e.node
+		});
+	}
+
+	function handleEdgeClick(e: { edge: Edge }) {
+		diagramStore.setActiveObject({
+			type: 'edge',
+			target: e.edge
+		});
+	}
 </script>
 
 <SvelteFlow
-	bind:nodes
-	bind:edges
+	bind:nodes={diagramStore.nodes}
+	bind:edges={diagramStore.edges}
 	fitView
 	{colorMode}
 	snapGrid={[10, 10]}
-	onnodeclick={(e) => console.log(e.node)}
-	onedgeclick={(e) => console.log(e.edge)}
+	onpaneclick={handlePaneClick}
+	onnodeclick={handleNodeClick}
+	onedgeclick={handleEdgeClick}
+	{onbeforedelete}
 	{nodeTypes}
 >
-	<Background {variant} />
+	<Background variant={BackgroundVariant.Dots} />
 	<Controls />
 </SvelteFlow>

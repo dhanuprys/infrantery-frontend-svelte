@@ -2,9 +2,19 @@
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';
 
-	import { toggleMode } from 'mode-watcher';
+	import { toggleMode, mode } from 'mode-watcher';
 	import { Button } from '$lib/components/ui/button/index.js';
+
+	import githubLight from 'highlight.js/styles/github.css?inline';
+	import githubDark from 'highlight.js/styles/github-dark.css?inline';
+
+	let colorMode = $derived(mode.current === 'dark' ? githubDark : githubLight);
+	$inspect(mode.current);
 </script>
+
+<svelte:head>
+	{@html `<style>${colorMode}</style>`}
+</svelte:head>
 
 <Button onclick={toggleMode} variant="outline" size="icon">
 	<SunIcon
