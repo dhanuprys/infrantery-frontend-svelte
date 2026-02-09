@@ -65,7 +65,8 @@ apiClient.interceptors.response.use(
 					.catch((err) => {
 						console.error('Refresh token failed');
 						processQueue(err, null);
-						goto('/login');
+						// full page reload
+						window.location.href = '/login';
 						reject(err);
 					})
 					.finally(() => {
@@ -75,8 +76,9 @@ apiClient.interceptors.response.use(
 		}
 
 		// Handle other 401 cases (invalid token, no token, etc)
-		if (error.response?.status === 401) {
-			goto('/login');
+		if (error.response?.status === 401 && window.location.pathname !== '/login') {
+			// full page reload
+			window.location.href = '/login';
 		}
 
 		return Promise.reject(error);

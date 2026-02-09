@@ -1,16 +1,21 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import ModeToggler from '$lib/components/mode-toggler.svelte';
 	import * as Breadcrumb from '$lib/components/ui/breadcrumb';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
+	import secureProjectSession from '$lib/services/secureProjectSession';
 	import {
 		BoxesIcon,
 		BoxIcon,
 		ChevronsUpDownIcon,
 		FolderLockIcon,
+		LockIcon,
 		PlusIcon,
 		PyramidIcon
 	} from '@lucide/svelte';
+	import { toast } from 'svelte-sonner';
 
 	interface Props {
 		breadcrumbs?: {
@@ -25,6 +30,13 @@
 	}
 
 	let { breadcrumbs = [] }: Props = $props();
+
+	function handleLockProject() {
+		secureProjectSession.lockProjects().then(() => {
+			toast.success('Project locked successfully');
+			goto('/projects');
+		});
+	}
 </script>
 
 <header class="border-b-2">
@@ -101,6 +113,7 @@
 		</div>
 
 		<div>
+			<Button variant="outline" onclick={handleLockProject}><LockIcon /> Lock Project</Button>
 			<ModeToggler />
 		</div>
 	</div>

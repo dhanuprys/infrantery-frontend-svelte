@@ -18,6 +18,15 @@ class SecureProjectSession {
 		this.secretIv.fill(1, 1, 2);
 	}
 
+	public async lockProjects() {
+		// clean up all keys that are a project
+		for (const key of Object.keys(sessionStorage)) {
+			if (key.startsWith('inf_project_')) {
+				sessionStorage.removeItem(key);
+			}
+		}
+	}
+
 	public async cleanUpOtherOpenedProjects(projectId: string) {
 		// clean up all keys that are not related with current project
 		for (const key of Object.keys(sessionStorage)) {

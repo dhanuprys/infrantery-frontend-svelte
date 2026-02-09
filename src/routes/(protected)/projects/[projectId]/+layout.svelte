@@ -6,6 +6,8 @@
 	import type { LayoutProps } from './$types';
 	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
 
+	import { Loader2 } from '@lucide/svelte';
+
 	let { children, params }: LayoutProps = $props();
 	let readyToShow = $state(false);
 
@@ -55,4 +57,9 @@
 
 {#if readyToShow}
 	{@render children()}
+{:else}
+	<div class="flex h-screen w-full flex-col items-center justify-center gap-4 bg-background">
+		<Loader2 class="size-8 animate-spin text-muted-foreground" />
+		<p class="text-sm text-muted-foreground">Verifying project access...</p>
+	</div>
 {/if}

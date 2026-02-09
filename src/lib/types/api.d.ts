@@ -127,10 +127,27 @@ export interface NoteResponse {
 	project_id: string;
 	file_name: string;
 	file_type: string;
+	icon?: string;
 	encrypted_content?: string;
 	encrypted_content_signature: string;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface CreateNoteRequest {
+	file_name: string;
+	file_type: string;
+	icon?: string;
+	encrypted_content: string;
+	encrypted_content_signature: string;
+}
+
+export interface UpdateNoteRequest {
+	file_name?: string;
+	file_type?: string;
+	icon?: string;
+	encrypted_content?: string;
+	encrypted_content_signature?: string;
 }
 
 // Diagram Types

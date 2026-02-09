@@ -121,7 +121,7 @@
 		@apply bg-background text-foreground;
 	}
 	code.hljs {
-		font-size: 10pt !important;
+		font-size: 11pt !important;
 		line-height: 1.6;
 		font-family: 'Fira Code', 'Consolas', monospace;
 	}

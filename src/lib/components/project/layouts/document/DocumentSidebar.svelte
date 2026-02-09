@@ -1,101 +1,95 @@
-<script lang="ts" module>
-	// This is sample data.
-	const data = {
-		// changes: [
-		// 	{
-		// 		file: 'README.md',
-		// 		state: '+10'
-		// 	}
-		// ],
-		tree: [
-			// ['lib', ['components', 'button.svelte', 'card.svelte'], 'utils.ts'],
-			// [
-			// 	'routes',
-			// 	['hello', '+page.svelte', '+page.ts'],
-			// 	'+page.svelte',
-			// 	'+page.server.ts',
-			// 	'+layout.svelte'
-			// ],
-			// ['static', 'favicon.ico', 'svelte.svg'],
-			'README.md'
-		]
-	};
-</script>
-
 <script lang="ts">
-	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
-	import ChevronRightIcon from '@lucide/svelte/icons/chevron-right';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import FileIcon from '@lucide/svelte/icons/file';
-	import FolderIcon from '@lucide/svelte/icons/folder';
+	import Plus from '@lucide/svelte/icons/plus';
+	import MoreHorizontal from '@lucide/svelte/icons/more-horizontal';
+	import Pencil from '@lucide/svelte/icons/pencil';
+	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import type { ComponentProps } from 'svelte';
+	import type { NoteResponse } from '$lib/types/api';
+	import { Button } from '$lib/components/ui/button';
+	import { NoteIcons } from '$lib/data/note-icons';
 
-	let { ref = $bindable(null), ...restProps }: ComponentProps<typeof Sidebar.Root> = $props();
+	let {
+		notes = [],
+		currentNoteId = null,
+		onSelectNote,
+		onCreateNote,
+		onRenameNote,
+		onDeleteNote,
+		...restProps
+	}: {
+		notes: NoteResponse[];
+		currentNoteId: string | null;
+		onSelectNote: (note: NoteResponse) => void;
+		onCreateNote: () => void;
+		onRenameNote: (note: NoteResponse) => void;
+		onDeleteNote: (note: NoteResponse) => void;
+	} & ComponentProps<typeof Sidebar.Root> = $props();
 </script>
 
 <Sidebar.Content>
-	<!-- <Sidebar.Group>
-		<Sidebar.GroupLabel>Changes</Sidebar.GroupLabel>
-		<Sidebar.GroupContent>
-			<Sidebar.Menu>
-				{#each data.changes as item, index (index)}
-					<Sidebar.MenuItem>
-						<Sidebar.MenuButton>
-							<FileIcon />
-							{item.file}
-						</Sidebar.MenuButton>
-						<Sidebar.MenuBadge>{item.state}</Sidebar.MenuBadge>
-					</Sidebar.MenuItem>
-				{/each}
-			</Sidebar.Menu>
-		</Sidebar.GroupContent>
-	</Sidebar.Group> -->
 	<Sidebar.Group>
-		<Sidebar.GroupLabel>Files</Sidebar.GroupLabel>
+		<div class="flex items-center justify-between px-2">
+			<Sidebar.GroupLabel>Notes</Sidebar.GroupLabel>
+			<Button variant="ghost" size="icon" class="h-6 w-6" onclick={onCreateNote}>
+				<Plus class="h-4 w-4" />
+			</Button>
+		</div>
 		<Sidebar.GroupContent>
 			<Sidebar.Menu>
-				{#each data.tree as item, index (index)}
-					{@render Tree({ item })}
-				{/each}
+				{#if notes.length === 0}
+					<div class="p-4 text-center text-sm text-muted-foreground">
+						No notes yet. <br />
+						Click + to create one.
+					</div>
+				{:else}
+					{#each notes as note (note.id)}
+						{@const Icon = NoteIcons[note.icon || 'file'] || FileIcon}
+						<Sidebar.MenuItem>
+							<div class="group/item flex w-full items-center">
+								<Sidebar.MenuButton
+									isActive={note.id === currentNoteId}
+									onclick={() => onSelectNote(note)}
+									class="flex-1"
+								>
+									<Icon class="h-4 w-4" />
+									<span class="truncate">{note.file_name}</span>
+								</Sidebar.MenuButton>
+
+								<DropdownMenu.Root>
+									<DropdownMenu.Trigger>
+										{#snippet child({ props })}
+											<Button
+												variant="ghost"
+												size="icon"
+												class="h-6 w-6 opacity-0 transition-opacity group-hover/item:opacity-100"
+												{...props}
+											>
+												<MoreHorizontal class="h-3 w-3" />
+											</Button>
+										{/snippet}
+									</DropdownMenu.Trigger>
+									<DropdownMenu.Content>
+										<DropdownMenu.Item onclick={() => onRenameNote(note)}>
+											<Pencil class="mr-2 h-4 w-4" />
+											Rename
+										</DropdownMenu.Item>
+										<DropdownMenu.Item
+											onclick={() => onDeleteNote(note)}
+											class="text-destructive focus:text-destructive"
+										>
+											<Trash2 class="mr-2 h-4 w-4" />
+											Delete
+										</DropdownMenu.Item>
+									</DropdownMenu.Content>
+								</DropdownMenu.Root>
+							</div>
+						</Sidebar.MenuItem>
+					{/each}
+				{/if}
 			</Sidebar.Menu>
 		</Sidebar.GroupContent>
 	</Sidebar.Group>
 </Sidebar.Content>
-
-<!-- eslint-disable-next-line @typescript-eslint/no-explicit-any -->
-{#snippet Tree({ item }: { item: string | any[] })}
-	{@const [name, ...items] = Array.isArray(item) ? item : [item]}
-	{#if !items.length}
-		<Sidebar.MenuButton
-			isActive={name === 'button.svelte'}
-			class="data-[active=true]:bg-transparent"
-		>
-			<FileIcon />
-			{name}
-		</Sidebar.MenuButton>
-	{:else}
-		<Sidebar.MenuItem>
-			<Collapsible.Root
-				class="group/collapsible [&[data-state=open]>button>svg:first-child]:rotate-90"
-				open={name === 'lib' || name === 'components'}
-			>
-				<Collapsible.Trigger>
-					{#snippet child({ props })}
-						<Sidebar.MenuButton {...props}>
-							<ChevronRightIcon className="transition-transform" />
-							<FolderIcon />
-							{name}
-						</Sidebar.MenuButton>
-					{/snippet}
-				</Collapsible.Trigger>
-				<Collapsible.Content>
-					<Sidebar.MenuSub>
-						{#each items as subItem, index (index)}
-							{@render Tree({ item: subItem })}
-						{/each}
-					</Sidebar.MenuSub>
-				</Collapsible.Content>
-			</Collapsible.Root>
-		</Sidebar.MenuItem>
-	{/if}
-{/snippet}
