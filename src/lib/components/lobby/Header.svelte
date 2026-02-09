@@ -5,14 +5,30 @@
 	}
 	const navigations: NavigationItem[] = [
 		{ label: 'Dashboard', href: '/' },
-		{ label: 'Projects', href: '/project' },
-		{ label: 'Account & Settings', href: '/setting' }
+		{ label: 'Projects', href: '/projects' },
+		{ label: 'Account & Settings', href: '/settings' }
 	];
 </script>
 
 <script lang="ts">
 	import ModeToggler from '$lib/components/mode-toggler.svelte';
 	import Button from '../ui/button/button.svelte';
+	import { goto } from '$app/navigation';
+	import { authService } from '$lib/services/auth.service';
+	import { userStore } from '$lib/stores/userStore.svelte';
+
+	async function handleLogout() {
+		try {
+			await authService.logout();
+			userStore.clearUser();
+			goto('/login');
+		} catch (error) {
+			console.error('Logout failed:', error);
+			// Even if backend fails, clear local state
+			userStore.clearUser();
+			goto('/login');
+		}
+	}
 </script>
 
 <header class="border-b-2">
@@ -25,6 +41,7 @@
 		</div>
 
 		<div>
+			<Button variant="ghost" onclick={handleLogout}>Logout</Button>
 			<ModeToggler />
 		</div>
 	</div>

@@ -11,6 +11,9 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { cn, type WithElementRef } from '$lib/utils.js';
+	import { authService } from '$lib/services/auth.service';
+	import { goto } from '$app/navigation';
+	import { userStore } from '$lib/stores/userStore.svelte';
 
 	let {
 		ref = $bindable(null),
@@ -19,10 +22,34 @@
 	}: WithElementRef<HTMLAttributes<HTMLDivElement>> = $props();
 
 	const id = $props.id();
+
+	let email = $state('');
+	let password = $state('');
+	let isLoading = $state(false);
+	let error = $state<string | null>(null);
+
+	async function handleSubmit(e: Event) {
+		e.preventDefault();
+		isLoading = true;
+		error = null;
+
+		try {
+			await authService.login(email, password);
+			// Fetch profile to populate store immediately
+			const profile = await authService.getProfile();
+			userStore.setUser(profile.data);
+			goto('/');
+		} catch (err: any) {
+			console.error(err);
+			error = err.response?.data?.error?.message || 'Login failed. Please check your credentials.';
+		} finally {
+			isLoading = false;
+		}
+	}
 </script>
 
 <div class={cn('flex flex-col gap-6', className)} bind:this={ref} {...restProps}>
-	<form>
+	<form onsubmit={handleSubmit}>
 		<FieldGroup>
 			<div class="flex flex-col items-center gap-2 text-center">
 				<a href="##" class="flex flex-col items-center gap-2 font-medium">
@@ -33,19 +60,32 @@
 				</a>
 				<h1 class="text-xl font-bold">INFRANTERY</h1>
 				<FieldDescription>
-					Don't have an account? <a href="/signup">Sign up</a>
+					Don't have an account? <a href="/register">Sign up</a>
 				</FieldDescription>
 			</div>
 			<Field>
-				<FieldLabel for="email-{id}">Email</FieldLabel>
-				<Input id="email-{id}" type="email" placeholder="m@example.com" required />
+				<FieldLabel for="email-{id}">Email or Username</FieldLabel>
+				<Input
+					id="email-{id}"
+					type="text"
+					placeholder="m@example.com"
+					required
+					bind:value={email}
+				/>
 			</Field>
 			<Field>
 				<FieldLabel for="password-{id}">Password</FieldLabel>
-				<Input id="password-{id}" type="password" required />
+				<Input id="password-{id}" type="password" required bind:value={password} />
 			</Field>
+			{#if error}
+				<div class="text-center text-sm font-medium text-destructive">
+					{error}
+				</div>
+			{/if}
 			<Field>
-				<Button type="submit">Login</Button>
+				<Button type="submit" disabled={isLoading}>
+					{isLoading ? 'Logging in...' : 'Login'}
+				</Button>
 			</Field>
 		</FieldGroup>
 	</form>
