@@ -1,12 +1,12 @@
 <script lang="ts">
 	import * as Resizable from '$lib/components/ui/resizable';
 	import * as Sketch from '$lib/components/project/layouts/sketch';
-	import Header from '$lib/components/project/layouts/Header.svelte';
+	import ProjectHeader from '$lib/components/project/layouts/ProjectHeader.svelte';
 	import { SvelteFlowProvider } from '@xyflow/svelte';
 </script>
 
 <div style:height="100vh" class="flex flex-col">
-	<Header />
+	<ProjectHeader />
 	<SvelteFlowProvider>
 		<main class="flex flex-1">
 			<Resizable.PaneGroup direction="horizontal">

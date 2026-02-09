@@ -3,6 +3,8 @@ import DockerImage from '$lib/assets/nodes/docker.jpg';
 import UbuntuImage from '$lib/assets/nodes/ubuntu.png';
 import PfSenseImage from '$lib/assets/nodes/pfsense.png';
 import PostgresImage from '$lib/assets/nodes/postgres.png';
+import SwitchImage from '$lib/assets/nodes/switch.png';
+import GrafanaImage from '$lib/assets/nodes/grafana.webp';
 
 export const nodeImages = [
 	{
@@ -35,5 +37,17 @@ export const nodeImages = [
 		src: PostgresImage,
 		alt: 'Postgres',
 		label: 'Postgres'
+	},
+	{
+		id: 'switch',
+		src: SwitchImage,
+		alt: 'Switch',
+		label: 'Switch'
+	},
+	{
+		id: 'grafana',
+		src: GrafanaImage,
+		alt: 'Grafana',
+		label: 'Grafana'
 	}
 ];

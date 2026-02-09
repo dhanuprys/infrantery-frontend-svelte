@@ -6,6 +6,7 @@
 		getConnectedEdges,
 		getIncomers,
 		getOutgoers,
+		MiniMap,
 		SvelteFlow,
 		useSvelteFlow,
 		type Edge,
@@ -15,10 +16,25 @@
 	import '@xyflow/svelte/dist/style.css';
 	import { mode } from 'mode-watcher';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { nodeTypes } from '$lib/data/node-types';
+	import { NodeTypeKey, nodeTypes } from '$lib/data/node-types';
+	import { onMount } from 'svelte';
 
 	let colorMode = $derived(mode.current || 'light');
 	const { screenToFlowPosition } = useSvelteFlow();
+
+	onMount(() => {
+		diagramStore.setNodes([
+			{
+				id: '1',
+				type: NodeTypeKey.SYMBOLIC_PARENT,
+				position: { x: 0, y: 0 },
+				data: {
+					label: 'Parent Diagram',
+					parentDiagramId: '1'
+				}
+			}
+		]);
+	});
 
 	const onbeforedelete: OnBeforeDelete = async ({ nodes: deletedNodes, edges: _edges }) => {
 		let remainingNodes = [...diagramStore.nodes];
@@ -73,7 +89,15 @@
 			target: e.edge
 		});
 	}
+
+	function handleKeyUp(e: KeyboardEvent) {
+		if (e.key.toLowerCase() === 'escape') {
+			diagramStore.setActiveObject(null);
+		}
+	}
 </script>
+
+<svelte:body onkeyup={handleKeyUp} />
 
 <SvelteFlow
 	bind:nodes={diagramStore.nodes}
@@ -89,4 +113,5 @@
 >
 	<Background variant={BackgroundVariant.Dots} />
 	<Controls />
+	<MiniMap />
 </SvelteFlow>

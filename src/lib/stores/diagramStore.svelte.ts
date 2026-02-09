@@ -27,6 +27,16 @@ class DiagramStore {
 	setLastClickPosition(position: { x: number; y: number }) {
 		this.lastClickPosition = position;
 	}
+
+	deleteNode(nodeId: string, releaseActiveObject: boolean = true) {
+		this.nodes = this.nodes.filter((n) => n.id !== nodeId);
+		if (releaseActiveObject) this.activeObject = null;
+	}
+
+	deleteEdge(edgeId: string, releaseActiveObject: boolean = true) {
+		this.edges = this.edges.filter((e) => e.id !== edgeId);
+		if (releaseActiveObject) this.activeObject = null;
+	}
 }
 
 export const diagramStore = new DiagramStore();

@@ -1,25 +1,42 @@
-import { type Icon as IconType, ScrollIcon, ServerIcon } from '@lucide/svelte';
+import {
+	type Icon as IconType,
+	RectangleHorizontalIcon,
+	ScrollIcon,
+	ServerIcon
+} from '@lucide/svelte';
 import CubeImage from '$lib/assets/nodes/cube.png';
 import { NodeTypeKey } from './node-types';
+import type { Node } from '@xyflow/svelte';
 
 export interface Shape {
-	type: string;
 	icon: typeof IconType;
 	label: string;
-	data?: any;
+	nodePayload: Partial<Node>;
 }
 
 export const shapes: Shape[] = [
 	{
-		type: NodeTypeKey.IMAGE,
 		icon: ServerIcon,
 		label: 'Node',
-		data: { src: CubeImage, alt: 'Default', label: 'Default' }
+		nodePayload: {
+			type: NodeTypeKey.IMAGE,
+			data: { src: CubeImage, alt: 'Default', label: 'Default' }
+		}
 	},
 	{
-		type: NodeTypeKey.COMMENT,
+		icon: RectangleHorizontalIcon,
+		label: 'Area',
+		nodePayload: {
+			type: NodeTypeKey.AREA,
+			data: { label: 'Area' }
+		}
+	},
+	{
 		icon: ScrollIcon,
 		label: 'Comment',
-		data: { content: 'Comment' }
+		nodePayload: {
+			type: NodeTypeKey.COMMENT,
+			data: { content: 'Comment' }
+		}
 	}
 ];

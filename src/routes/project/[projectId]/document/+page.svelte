@@ -1,25 +1,13 @@
 <script lang="ts">
-	import {
-		Background,
-		BackgroundVariant,
-		Controls,
-		MarkerType,
-		SvelteFlow,
-		type Edge,
-		type Node
-	} from '@xyflow/svelte';
-	import ImageNode from '$lib/components/project/digrams/nodes/ImageNode.svelte';
 	import * as Resizable from '$lib/components/ui/resizable';
-	import '@xyflow/svelte/dist/style.css';
-	import { mode } from 'mode-watcher';
 	import * as Document from '$lib/components/project/layouts/document';
-	import Header from '$lib/components/project/layouts/Header.svelte';
+	import ProjectHeader from '$lib/components/project/layouts/ProjectHeader.svelte';
 
 	let mdValue = $state('');
 </script>
 
 <div style:height="100vh" class="flex flex-col">
-	<Header />
+	<ProjectHeader />
 	<Document.ToolBar />
 	<main class="flex flex-1">
 		<Resizable.PaneGroup direction="horizontal">

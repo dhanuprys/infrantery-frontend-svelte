@@ -1,5 +1,6 @@
 <script module lang="ts">
-	export type CommentNodeType = Node<{ content: string }, 'number'>;
+	export type CommentNodeProps = { content: string };
+	export type CommentNodeType = Node<CommentNodeProps, 'number'>;
 </script>
 
 <script lang="ts">
@@ -12,5 +13,5 @@
 
 <div class="">
 	{#if selected}<NodeResizer />{/if}
-	<p class="text-xs">{data.content} ini sangat pendek jika tidak diresize</p>
+	<p class="text-xs">{data.content}</p>
 </div>

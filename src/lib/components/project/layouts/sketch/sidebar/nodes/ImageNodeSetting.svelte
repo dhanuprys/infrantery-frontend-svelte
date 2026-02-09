@@ -53,8 +53,7 @@
 	}
 
 	function deleteNode() {
-		diagramStore.setNodes(diagramStore.nodes.filter((n) => n.id !== node.id));
-		diagramStore.setActiveObject(null);
+		diagramStore.deleteNode(node.id);
 	}
 </script>
 

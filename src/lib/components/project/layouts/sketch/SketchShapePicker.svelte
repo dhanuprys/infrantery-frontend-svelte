@@ -3,8 +3,14 @@
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import { shapes, type Shape } from '$lib/data/shapes';
 
-	function addNode(type: string, data?: any) {
+	function addNode(type?: string, data?: Record<string, unknown>) {
 		const { x: lastX, y: lastY } = diagramStore.lastClickPosition;
+
+		if (!type) {
+			console.error('No node type provided');
+			return;
+		}
+
 		diagramStore.setNodes([
 			...diagramStore.nodes,
 			{
@@ -23,7 +29,7 @@
 {#snippet shapeButton(shape: Shape)}
 	<button
 		type="button"
-		onclick={() => addNode(shape.type, shape.data)}
+		onclick={() => addNode(shape.nodePayload.type, shape.nodePayload.data)}
 		class="apsect-square flex aspect-square! w-full cursor-pointer flex-col items-center justify-center py-1"
 	>
 		<shape.icon class="size-5" />
