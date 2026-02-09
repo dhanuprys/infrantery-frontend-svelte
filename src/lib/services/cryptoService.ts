@@ -13,6 +13,24 @@ export interface KeyPairSet {
 export class CryptoService {
 	// --- UTILITY: ArrayBuffer <-> Base64 ---
 	// These helpers ensure you can actually save the data to a DB or JSON
+	private readonly DELIMITER = '<delimiter>';
+
+	formatEncryptedData(data: SymmetricEncryptedData): string {
+		return `${data.ciphertext}${this.DELIMITER}${data.salt}${this.DELIMITER}${data.iv}`;
+	}
+
+	parseEncryptedData(formatted: string): SymmetricEncryptedData {
+		const parts = formatted.split(this.DELIMITER);
+		if (parts.length !== 3) {
+			throw new Error('Invalid encrypted data format');
+		}
+		return {
+			ciphertext: parts[0],
+			salt: parts[1],
+			iv: parts[2]
+		};
+	}
+
 	private arrayBufferToBase64(buffer: ArrayBuffer): string {
 		let binary = '';
 		const bytes = new Uint8Array(buffer);
@@ -129,11 +147,13 @@ export class CryptoService {
 
 	async encryptWithPassphrase(
 		passphrase: string,
-		plaintext: string
+		plaintext: string,
+		salt?: Uint8Array,
+		iv?: Uint8Array<ArrayBuffer>
 	): Promise<SymmetricEncryptedData> {
 		// 1. Generate random Salt and IV
-		const salt = window.crypto.getRandomValues(new Uint8Array(16));
-		const iv = window.crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV for AES-GCM
+		salt = salt ?? window.crypto.getRandomValues(new Uint8Array(16));
+		iv = iv ?? window.crypto.getRandomValues(new Uint8Array(12)); // 96-bit IV for AES-GCM
 
 		// 2. Derive Key
 		const key = await this.deriveKey(passphrase, salt);

@@ -3,37 +3,16 @@ import type {
 	APIResponse,
 	ProjectResponse,
 	ProjectDetailResponse,
-	ProjectMemberResponse
+	ProjectMemberResponse,
+	CreateProjectRequest,
+	UpdateProjectRequest,
+	AddMemberRequest,
+	UpdateMemberRequest
 } from '$lib/types/api';
-
-export interface CreateProjectParams {
-	name: string;
-	description: string;
-	secret_encryption_private_key: string;
-	encryption_public_key: string;
-	secret_signing_private_key: string;
-	signing_public_key: string;
-}
-
-export interface UpdateProjectParams {
-	name?: string;
-	description?: string;
-}
-
-export interface AddMemberParams {
-	user_id: string;
-	role: string;
-	permissions: string[];
-}
-
-export interface UpdateMemberParams {
-	role: string;
-	permissions: string[];
-}
 
 export const projectService = {
 	// Project Management
-	async createProject(params: CreateProjectParams): Promise<APIResponse<ProjectResponse>> {
+	async createProject(params: CreateProjectRequest): Promise<APIResponse<ProjectResponse>> {
 		const response = await apiClient.post<APIResponse<ProjectResponse>>('/projects', params);
 		return response.data;
 	},
@@ -43,14 +22,17 @@ export const projectService = {
 		return response.data;
 	},
 
-	async getProject(id: string): Promise<APIResponse<ProjectDetailResponse>> {
-		const response = await apiClient.get<APIResponse<ProjectDetailResponse>>(`/projects/${id}`);
+	async getProject(id: string, withSecret = false): Promise<APIResponse<ProjectDetailResponse>> {
+		const query = withSecret ? '?with_secret=true' : '';
+		const response = await apiClient.get<APIResponse<ProjectDetailResponse>>(
+			`/projects/${id}${query}`
+		);
 		return response.data;
 	},
 
 	async updateProject(
 		id: string,
-		params: UpdateProjectParams
+		params: UpdateProjectRequest
 	): Promise<APIResponse<ProjectResponse>> {
 		const response = await apiClient.put<APIResponse<ProjectResponse>>(`/projects/${id}`, params);
 		return response.data;
@@ -61,7 +43,7 @@ export const projectService = {
 	},
 
 	// Collaboration (Member Management)
-	async addMember(projectId: string, params: AddMemberParams): Promise<void> {
+	async addMember(projectId: string, params: AddMemberRequest): Promise<void> {
 		await apiClient.post(`/projects/${projectId}/members`, params);
 	},
 
@@ -72,7 +54,11 @@ export const projectService = {
 		return response.data;
 	},
 
-	async updateMember(projectId: string, userId: string, params: UpdateMemberParams): Promise<void> {
+	async updateMember(
+		projectId: string,
+		userId: string,
+		params: UpdateMemberRequest
+	): Promise<void> {
 		await apiClient.put(`/projects/${projectId}/members/${userId}`, params);
 	},
 

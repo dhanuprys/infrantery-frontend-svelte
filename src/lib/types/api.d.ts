@@ -51,6 +51,43 @@ export interface UserProfileResponse {
 	updated_at: string;
 }
 
+export interface UpdateProfileRequest {
+	name: string;
+	email: string;
+	username: string;
+}
+
+export interface ChangePasswordRequest {
+	current_password: string;
+	new_password: string;
+	confirm_password?: string;
+}
+
+export interface CreateProjectRequest {
+	name: string;
+	description: string;
+	secret_encrypted_private_key: string; // encrypted + "." + salt + "." + iv
+	encryption_public_key: string;
+	secret_signing_private_key: string; // encrypted + "." + salt + "." + iv
+	signing_public_key: string;
+}
+
+export interface UpdateProjectRequest {
+	name?: string;
+	description?: string;
+}
+
+export interface AddMemberRequest {
+	user_id: string;
+	role: string;
+	permissions: string[];
+}
+
+export interface UpdateMemberRequest {
+	role: string;
+	permissions: string[];
+}
+
 // Project Types
 export interface ProjectResponse {
 	id: string;
