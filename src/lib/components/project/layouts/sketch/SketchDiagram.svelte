@@ -16,25 +16,10 @@
 	import '@xyflow/svelte/dist/style.css';
 	import { mode } from 'mode-watcher';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { NodeTypeKey, nodeTypes } from '$lib/data/node-types';
-	import { onMount } from 'svelte';
+	import { nodeTypes } from '$lib/data/node-types';
 
 	let colorMode = $derived(mode.current || 'light');
 	const { screenToFlowPosition } = useSvelteFlow();
-
-	onMount(() => {
-		diagramStore.setNodes([
-			{
-				id: '1',
-				type: NodeTypeKey.SYMBOLIC_PARENT,
-				position: { x: 0, y: 0 },
-				data: {
-					label: 'Parent Diagram',
-					parentDiagramId: '1'
-				}
-			}
-		]);
-	});
 
 	const onbeforedelete: OnBeforeDelete = async ({ nodes: deletedNodes, edges: _edges }) => {
 		let remainingNodes = [...diagramStore.nodes];
@@ -110,6 +95,8 @@
 	onedgeclick={handleEdgeClick}
 	{onbeforedelete}
 	{nodeTypes}
+	onnodedragstop={() => diagramStore.markDirty()}
+	onconnect={() => diagramStore.markDirty()}
 >
 	<Background variant={BackgroundVariant.Dots} />
 	<Controls />

@@ -2,6 +2,7 @@
 	import { Separator } from '$lib/components/ui/separator';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import { shapes, type Shape } from '$lib/data/shapes';
+	import { ObjectId } from 'bson';
 
 	function addNode(type?: string, data?: Record<string, unknown>) {
 		const { x: lastX, y: lastY } = diagramStore.lastClickPosition;
@@ -14,7 +15,7 @@
 		diagramStore.setNodes([
 			...diagramStore.nodes,
 			{
-				id: (diagramStore.nodes.length + 1).toString(),
+				id: new ObjectId().toString(),
 				type,
 				position: { x: lastX, y: lastY },
 				data: { label: 'Node ' + (diagramStore.nodes.length + 1), ...data }

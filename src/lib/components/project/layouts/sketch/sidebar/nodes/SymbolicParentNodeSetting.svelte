@@ -27,10 +27,22 @@
 				return n;
 			})
 		);
+		diagramStore.markDirty();
 	}
 
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
+
 	function goToParentNodeDiagram() {
-		alert('go to parent diagram');
+		const parentId = node.data.parentDiagramId;
+		const projectId = diagramStore.projectId;
+
+		if (parentId && projectId) {
+			toast.success('Parent diagram opened');
+			goto(`/projects/${projectId}/diagrams/${parentId}`);
+		} else {
+			toast.error('Parent diagram information missing');
+		}
 	}
 </script>
 

@@ -26,10 +26,12 @@
 				return n;
 			})
 		);
+		diagramStore.markDirty();
 	}
 
 	function deleteNode() {
 		diagramStore.deleteNode(node.id);
+		diagramStore.markDirty();
 	}
 </script>
 

@@ -10,6 +10,7 @@
 	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
 	import { cryptoService } from '$lib/services/cryptoService';
 
+	import CreateFolderDialog from '$lib/components/project/dialogs/CreateFolderDialog.svelte';
 	import CreateNoteDialog from '$lib/components/project/dialogs/CreateNoteDialog.svelte';
 	import EditNoteDialog from '$lib/components/project/dialogs/EditNoteDialog.svelte';
 	import DeleteNoteDialog from '$lib/components/project/dialogs/DeleteNoteDialog.svelte';
@@ -25,11 +26,13 @@
 	let lastSaved = $state<Date | null>(null);
 
 	let createDialogOpen = $state(false);
+	let createFolderDialogOpen = $state(false);
 	let editDialogOpen = $state(false);
 	let deleteDialogOpen = $state(false);
 
 	let noteToEdit = $state<NoteResponse | null>(null);
 	let noteToDelete = $state<NoteResponse | null>(null);
+	let targetParentId = $state<string | undefined>(undefined);
 
 	// Autosave timer
 	let saveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -98,8 +101,14 @@
 		}
 	}
 
-	function openCreateDialog() {
+	function openCreateDialog(parentId?: string) {
+		targetParentId = parentId;
 		createDialogOpen = true;
+	}
+
+	function openCreateFolderDialog(parentId?: string) {
+		targetParentId = parentId;
+		createFolderDialogOpen = true;
 	}
 
 	function openEditDialog(note: NoteResponse) {
@@ -132,7 +141,8 @@
 
 			const res = await noteService.createNote(projectId, {
 				file_name: name,
-				file_type: 'markdown',
+				type: 'note',
+				parent_id: targetParentId,
 				icon: icon,
 				encrypted_content: encrypted,
 				encrypted_content_signature: signature
@@ -145,6 +155,23 @@
 			console.error('Failed to create note:', err);
 			toast.error(err.message || 'Failed to create note');
 			throw err; // Propagate to dialog to show error state if needed
+		}
+	}
+
+	async function handleCreateFolder(name: string) {
+		try {
+			const res = await noteService.createNote(projectId, {
+				file_name: name,
+				type: 'folder',
+				parent_id: targetParentId
+			});
+
+			notes = [...notes, res.data];
+			toast.success('Folder created');
+		} catch (err: any) {
+			console.error('Failed to create folder:', err);
+			toast.error(err.message || 'Failed to create folder');
+			throw err;
 		}
 	}
 
@@ -179,13 +206,27 @@
 		try {
 			await noteService.deleteNote(projectId, noteToDelete.id);
 
+			// Remove note and any children (client-side cleanup, backend should handle cascade if needed or recursive query to clean up view)
+			// For now just remove the item itself. The tree derivation will handle children becoming orphans if they exist (though backend should prevent or cascade)
+			// Actually backend doesn't cascade yet. But we can just remove from list.
+
+			// If deleting a folder, we should probably remove all descendants from the view too
+			// But since we just have a flat list, we can just filter out.
+			// The tree builder logic handles orphans by putting them at root? Or getting stuck?
+			// The tree builder: "if (note.parent_id && nodeMap.has(note.parent_id))".
+			// If parent is deleted (and missing from map), children become orphans.
+			// Ideally they should be removed too.
+
+			// For now, simpler: retrieve updated list from server? No, slow.
+			// Just remove the deleted item.
 			notes = notes.filter((n) => n.id !== noteToDelete!.id);
+
 			if (currentNote?.id === noteToDelete.id) {
 				currentNote = null;
 				mdValue = '';
 			}
 
-			toast.success('Note deleted');
+			toast.success('Deleted');
 		} catch (err: any) {
 			console.error('Failed to delete note:', err);
 			toast.error('Failed to delete note');
@@ -261,6 +302,7 @@
 					currentNoteId={currentNote?.id || null}
 					onSelectNote={selectNote}
 					onCreateNote={openCreateDialog}
+					onCreateFolder={openCreateFolderDialog}
 					onRenameNote={openEditDialog}
 					onDeleteNote={openDeleteDialog}
 				/>
@@ -283,6 +325,8 @@
 	</main>
 
 	<CreateNoteDialog bind:open={createDialogOpen} onsubmit={handleCreateNote} />
+
+	<CreateFolderDialog bind:open={createFolderDialogOpen} onsubmit={handleCreateFolder} />
 
 	<EditNoteDialog bind:open={editDialogOpen} note={noteToEdit} onsubmit={handleEditNote} />
 

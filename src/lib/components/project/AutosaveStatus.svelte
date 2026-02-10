@@ -48,7 +48,14 @@
 			class="col-start-1 row-start-1 flex items-center gap-x-2 text-muted-foreground"
 		>
 			<CloudUploadIcon class="size-5 animate-pulse" />
-			<span class="text-xs">Saving...</span>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<span class="text-xs">Saving...</span>
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>Saving changes...</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
 		</div>
 	{/if}
 
@@ -58,7 +65,14 @@
 			class="col-start-1 row-start-1 flex items-center gap-x-2 text-amber-500"
 		>
 			<CircleDashedIcon class="size-5" />
-			<span class="text-xs">Unsaved changes</span>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<span class="text-xs">Unsaved changes</span>
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>You have unsaved changes</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
 		</div>
 	{/if}
 
@@ -68,7 +82,14 @@
 			class="col-start-1 row-start-1 flex items-center gap-x-2 text-destructive"
 		>
 			<TriangleAlertIcon class="size-5" />
-			<span class="text-xs">Save failed</span>
+			<Tooltip.Root>
+				<Tooltip.Trigger>
+					<span class="text-xs">Save failed</span>
+				</Tooltip.Trigger>
+				<Tooltip.Content>
+					<p>Failed to save changes</p>
+				</Tooltip.Content>
+			</Tooltip.Root>
 		</div>
 	{/if}
 </div>

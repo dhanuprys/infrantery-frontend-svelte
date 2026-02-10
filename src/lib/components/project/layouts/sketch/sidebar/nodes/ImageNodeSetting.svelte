@@ -5,13 +5,23 @@
 	import * as Accordion from '$lib/components/ui/accordion';
 	import { Input } from '$lib/components/ui/input';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { ChevronsUpDownIcon } from '@lucide/svelte';
+	import { ChevronsUpDownIcon, ExternalLink, Network } from '@lucide/svelte';
 	import { nodeImages } from '$lib/data/node-images';
 	import { Separator } from '$lib/components/ui/separator';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
+	import { cryptoService } from '$lib/services/cryptoService';
+	import { diagramService } from '$lib/services/diagram.service';
+	import { toast } from 'svelte-sonner';
+	import type { DiagramData } from '$lib/types';
+	import { NodeTypeKey } from '$lib/data/node-types';
+	import { ObjectId } from 'bson';
 
 	let { node }: { node: Node<ImageNodeProps, 'number'> } = $props();
 	let labelValue = $state(node.data.label);
+	let isCreatingChild = $state(false);
 
 	function updateLabel(e: Event) {
 		if (labelValue.length > 20) return;
@@ -30,6 +40,7 @@
 				return n;
 			})
 		);
+		diagramStore.markDirty();
 	}
 
 	function updateNodeImage(image: (typeof nodeImages)[number]) {
@@ -50,10 +61,116 @@
 				return n;
 			})
 		);
+		diagramStore.markDirty();
 	}
 
 	function deleteNode() {
 		diagramStore.deleteNode(node.id);
+		diagramStore.markDirty();
+	}
+
+	async function handleChildDiagram() {
+		const projectId = page.params.projectId;
+		const currentDiagramId = page.params.diagramId;
+
+		if (node.data.childDiagramId) {
+			goto(`/projects/${projectId}/diagrams/${node.data.childDiagramId}`);
+			toast.success('Child diagram opened');
+			return;
+		}
+
+		if (!projectSessionStore.keys || !projectId || !currentDiagramId) {
+			toast.error('Project keys or ID missing');
+			return;
+		}
+
+		isCreatingChild = true;
+		try {
+			// --- 1. Create Child Diagram (Clean state with Symbolic Parent) ---
+			const initialChildData: DiagramData = {
+				nodes: [
+					{
+						id: new ObjectId().toString(),
+						type: NodeTypeKey.SYMBOLIC_PARENT,
+						position: { x: 0, y: 0 },
+						data: {
+							label: 'Master',
+							parentDiagramId: currentDiagramId
+						}
+					}
+				],
+				edges: []
+			};
+			const childJson = JSON.stringify(initialChildData);
+
+			const childEncrypted = await cryptoService.encryptWithPublicKey(
+				projectSessionStore.keys.encryptionPublicKey,
+				childJson
+			);
+			const childSignature = await cryptoService.signData(
+				projectSessionStore.keys.signingPrivateKey,
+				childEncrypted
+			);
+
+			const res = await diagramService.createDiagram(projectId, {
+				diagram_name: `Child of ${node.data.label || 'Node'}`,
+				description: `Child diagram created from node ${node.id}`,
+				parent_diagram_id: currentDiagramId,
+				encrypted_data: childEncrypted,
+				encrypted_data_signature: childSignature
+			});
+
+			const newChildId = res.data.id;
+
+			// --- 2. Update Parent Diagram (Link to Child) ---
+			// We must save the parent diagram explicitly to persist the 'childDiagramId' link.
+			// We do NOT switch the diagramStore to the child nodes yet, to preserve the parent view during save.
+
+			const updatedParentNodes = diagramStore.nodes.map((n) => {
+				if (n.id === node.id) {
+					return {
+						...n,
+						data: {
+							...n.data,
+							childDiagramId: newChildId
+						}
+					};
+				}
+				return n;
+			});
+
+			const parentData: DiagramData = {
+				nodes: updatedParentNodes,
+				edges: diagramStore.edges
+			};
+
+			const parentJson = JSON.stringify(parentData);
+			const parentEncrypted = await cryptoService.encryptWithPublicKey(
+				projectSessionStore.keys.encryptionPublicKey,
+				parentJson
+			);
+			const parentSignature = await cryptoService.signData(
+				projectSessionStore.keys.signingPrivateKey,
+				parentEncrypted
+			);
+
+			await diagramService.updateDiagram(projectId, currentDiagramId, {
+				encrypted_data: parentEncrypted,
+				encrypted_data_signature: parentSignature
+			});
+
+			// Update local store to match the saved state and mark as clean
+			diagramStore.setNodes(updatedParentNodes);
+			diagramStore.markSaved();
+
+			toast.success('Child diagram created');
+			goto(`/projects/${projectId}/diagrams/${newChildId}`);
+		} catch (error: any) {
+			console.error('Failed to create child diagram:', error);
+			toast.error(error.message || 'Failed to create child diagram');
+		} finally {
+			isCreatingChild = false;
+		}
 	}
 </script>
 
@@ -104,6 +221,25 @@
 			<Field.Description>Label for the node.</Field.Description>
 		</Field.Field>
 	</Field.Group>
+	<Field.Group>
+		<Field.Field>
+			<Button
+				variant="outline"
+				class="w-full justify-start"
+				onclick={handleChildDiagram}
+				disabled={isCreatingChild}
+			>
+				{#if node.data.childDiagramId}
+					<ExternalLink class="mr-2 size-4" />
+					Open Child Diagram
+				{:else}
+					<Network class="mr-2 size-4" />
+					{isCreatingChild ? 'Creating...' : 'Create Child Diagram'}
+				{/if}
+			</Button>
+		</Field.Field>
+	</Field.Group>
+
 	<Field.Group>
 		<Field.Field>
 			<Button id="delete-btn" variant="destructive" onclick={deleteNode}>Delete</Button>

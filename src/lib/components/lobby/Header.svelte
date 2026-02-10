@@ -4,7 +4,6 @@
 		href: string;
 	}
 	const navigations: NavigationItem[] = [
-		{ label: 'Dashboard', href: '/' },
 		{ label: 'Projects', href: '/projects' },
 		{ label: 'Account & Settings', href: '/settings' }
 	];
@@ -16,6 +15,7 @@
 	import { goto } from '$app/navigation';
 	import { authService } from '$lib/services/auth.service';
 	import { userStore } from '$lib/stores/userStore.svelte';
+	import { LogOutIcon } from '@lucide/svelte';
 
 	async function handleLogout() {
 		try {
@@ -41,7 +41,9 @@
 		</div>
 
 		<div>
-			<Button variant="ghost" onclick={handleLogout}>Logout</Button>
+			<Button variant="destructive" onclick={handleLogout}>
+				<LogOutIcon />Logout</Button
+			>
 			<ModeToggler />
 		</div>
 	</div>

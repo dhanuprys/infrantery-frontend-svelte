@@ -3,6 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
+	import * as Card from '$lib/components/ui/card';
 	import { ProjectSessionKeys } from '$lib/data/project-session-keys';
 	import { cryptoService } from '$lib/services/cryptoService';
 	import { projectService } from '$lib/services/project.service';
@@ -11,6 +12,7 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
+	import { ShieldCheck, Lock, Loader2, KeyRound } from '@lucide/svelte';
 
 	let { params }: PageProps = $props();
 	let projectId = $derived(params.projectId);
@@ -95,41 +97,78 @@
 	});
 </script>
 
-<div class="flex min-h-screen w-full items-center justify-center bg-background p-4">
-	<div class="w-full max-w-md space-y-8">
-		<div class="text-center">
-			<h1 class="text-2xl font-bold tracking-tight">Authorize Project</h1>
-			{#if project}
-				<p class="mt-2 text-muted-foreground">
-					Enter master password for <span class="font-medium text-foreground">{project.name}</span>
-				</p>
-			{:else if loading}
-				<p class="mt-2 text-muted-foreground">Loading project details...</p>
-			{/if}
+<div class="relative flex min-h-screen w-full items-center justify-center bg-muted/40 p-4">
+	<header class="absolute top-0 right-0 left-0 flex items-center justify-between p-6">
+		<Button variant="ghost" onclick={() => goto('/projects')}>Back to Projects</Button>
+	</header>
+	<div class="w-full max-w-lg">
+		<div class="mb-8 text-center">
+			<h1 class="text-2xl font-bold tracking-tight">Project Authorization</h1>
+			<p class="mt-2 text-muted-foreground">Secure access to your encrypted project data</p>
 		</div>
 
-		<form onsubmit={handleAuthorize} class="space-y-6">
-			{#if error}
-				<div class="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
-					{error}
+		<Card.Root class="border-border/50 shadow-lg">
+			<Card.Header>
+				<Card.Title>Unlock Project</Card.Title>
+				<Card.Description>
+					{#if project}
+						Enter the master password for <span class="font-semibold text-foreground"
+							>{project.name}</span
+						>
+					{:else if loading}
+						Loading project details...
+					{/if}
+				</Card.Description>
+			</Card.Header>
+			<Card.Content>
+				<form onsubmit={handleAuthorize} class="space-y-4">
+					{#if error}
+						<div class="rounded-md bg-destructive/10 p-3 text-sm font-medium text-destructive">
+							{error}
+						</div>
+					{/if}
+
+					<div class="space-y-2">
+						<Label for="password">Master Password</Label>
+						<div class="relative">
+							<KeyRound class="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
+							<Input
+								id="password"
+								type="password"
+								bind:value={password}
+								placeholder="Enter your project master password"
+								required
+								disabled={authLoading || loading}
+								class="pl-9"
+							/>
+						</div>
+					</div>
+
+					<Button type="submit" class="w-full" disabled={authLoading || loading || !project}>
+						{#if authLoading}
+							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
+							Unlocking...
+						{:else}
+							Unlock Project
+						{/if}
+					</Button>
+				</form>
+			</Card.Content>
+			<Card.Footer class="flex flex-col gap-4 border-t bg-muted/20 px-6 py-4">
+				<div
+					class="flex items-start gap-3 rounded-md border bg-background/50 p-3 text-sm text-muted-foreground"
+				>
+					<ShieldCheck class="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+					<div class="space-y-1">
+						<p class="font-medium text-foreground">Zero-Knowledge Security</p>
+						<p class="text-xs leading-relaxed">
+							Your master password is used to decrypt your project keys locally in your browser. <strong
+								class="font-semibold text-foreground">It is never sent to our servers.</strong
+							>
+						</p>
+					</div>
 				</div>
-			{/if}
-
-			<div class="grid gap-2">
-				<Label for="password">Master Password</Label>
-				<Input
-					id="password"
-					type="password"
-					bind:value={password}
-					placeholder="Enter your project master password"
-					required
-					disabled={authLoading || loading}
-				/>
-			</div>
-
-			<Button type="submit" class="w-full" disabled={authLoading || loading || !project}>
-				{authLoading ? 'Authorizing...' : 'Unlock Project'}
-			</Button>
-		</form>
+			</Card.Footer>
+		</Card.Root>
 	</div>
 </div>

@@ -107,9 +107,31 @@ export class CryptoService {
 		};
 	}
 
-	// --- 2. ASYMMETRIC ENCRYPTION (Public Key) ---
+	// --- 2. ASYMMETRIC ENCRYPTION (Hybrid: RSA-OAEP + AES-GCM) ---
+
+	private readonly HYBRID_PREFIX = 'HYBRID|';
+	private readonly HYBRID_DELIMITER = '|';
 
 	async encryptWithPublicKey(publicKeyBase64: string, plaintext: string): Promise<string> {
+		// 1. Generate ephemeral AES key
+		const aesKey = await window.crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, [
+			'encrypt',
+			'decrypt'
+		]);
+
+		// 2. Encrypt plaintext with AES
+		const iv = window.crypto.getRandomValues(new Uint8Array(12));
+		const encodedData = new TextEncoder().encode(plaintext);
+		const ciphertextBuffer = await window.crypto.subtle.encrypt(
+			{ name: 'AES-GCM', iv: iv },
+			aesKey,
+			encodedData
+		);
+
+		// 3. Export AES key
+		const rawAesKey = await window.crypto.subtle.exportKey('raw', aesKey);
+
+		// 4. Encrypt AES key with RSA Public Key
 		const publicKey = await this.importKey(
 			publicKeyBase64,
 			'spki',
@@ -117,16 +139,74 @@ export class CryptoService {
 			['encrypt']
 		);
 
-		const encodedData = new TextEncoder().encode(plaintext);
-		const encryptedBuffer = await window.crypto.subtle.encrypt(
+		const encryptedKeyBuffer = await window.crypto.subtle.encrypt(
 			{ name: 'RSA-OAEP' },
 			publicKey,
-			encodedData
+			rawAesKey
 		);
-		return this.arrayBufferToBase64(encryptedBuffer);
+
+		// 5. Format
+		const b64Key = this.arrayBufferToBase64(encryptedKeyBuffer);
+		const b64IV = this.arrayBufferToBase64(iv.buffer as ArrayBuffer);
+		const b64Cipher = this.arrayBufferToBase64(ciphertextBuffer);
+
+		return `${this.HYBRID_PREFIX}${b64Key}${this.HYBRID_DELIMITER}${b64IV}${this.HYBRID_DELIMITER}${b64Cipher}`;
 	}
 
 	async decryptWithPrivateKey(privateKeyBase64: string, ciphertextBase64: string): Promise<string> {
+		// Check for Hybrid format
+		if (ciphertextBase64.startsWith(this.HYBRID_PREFIX)) {
+			try {
+				const parts = ciphertextBase64
+					.substring(this.HYBRID_PREFIX.length)
+					.split(this.HYBRID_DELIMITER);
+				if (parts.length !== 3) throw new Error('Invalid hybrid encryption format');
+
+				const [b64EncryptedKey, b64IV, b64Cipher] = parts;
+
+				// 1. Decrypt AES Key with RSA Private Key
+				const privateKey = await this.importKey(
+					privateKeyBase64,
+					'pkcs8',
+					{ name: 'RSA-OAEP', hash: 'SHA-256' },
+					['decrypt']
+				);
+				const encryptedKeyBuffer = this.base64ToArrayBuffer(b64EncryptedKey);
+				const rawAesKeyBuffer = await window.crypto.subtle.decrypt(
+					{ name: 'RSA-OAEP' },
+					privateKey,
+					encryptedKeyBuffer
+				);
+
+				// 2. Import AES Key
+				const aesKey = await window.crypto.subtle.importKey(
+					'raw',
+					rawAesKeyBuffer,
+					{ name: 'AES-GCM', length: 256 },
+					false,
+					['decrypt']
+				);
+
+				// 3. Decrypt Data
+				const iv = this.base64ToArrayBuffer(b64IV);
+				const ciphertext = this.base64ToArrayBuffer(b64Cipher);
+
+				const decryptedBuffer = await window.crypto.subtle.decrypt(
+					{ name: 'AES-GCM', iv: iv },
+					aesKey,
+					ciphertext
+				);
+
+				return new TextDecoder().decode(decryptedBuffer);
+			} catch (err) {
+				console.error('Hybrid decryption failed, attempting legacy:', err);
+				// Fallthrough to try legacy, though unlikely to work if prefix was present but data corrupt
+				// But safety first.
+				throw err;
+			}
+		}
+
+		// Fallback to Legacy Raw RSA
 		const privateKey = await this.importKey(
 			privateKeyBase64,
 			'pkcs8',

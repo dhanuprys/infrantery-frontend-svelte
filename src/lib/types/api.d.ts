@@ -125,8 +125,9 @@ export interface ProjectMemberResponse {
 export interface NoteResponse {
 	id: string;
 	project_id: string;
+	parent_id?: string;
+	type: 'note' | 'folder';
 	file_name: string;
-	file_type: string;
 	icon?: string;
 	encrypted_content?: string;
 	encrypted_content_signature: string;
@@ -135,16 +136,17 @@ export interface NoteResponse {
 }
 
 export interface CreateNoteRequest {
+	parent_id?: string;
+	type: 'note' | 'folder';
 	file_name: string;
-	file_type: string;
 	icon?: string;
-	encrypted_content: string;
-	encrypted_content_signature: string;
+	encrypted_content?: string;
+	encrypted_content_signature?: string;
 }
 
 export interface UpdateNoteRequest {
 	file_name?: string;
-	file_type?: string;
+	parent_id?: string;
 	icon?: string;
 	encrypted_content?: string;
 	encrypted_content_signature?: string;

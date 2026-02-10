@@ -10,7 +10,7 @@
 	// I'll stick to simple layout first.
 </script>
 
-<div class="h-full space-y-8 p-8">
+<div class="container mx-auto h-full max-w-7xl space-y-8 p-8">
 	<div class="flex items-center justify-between space-y-2">
 		<div>
 			<h2 class="text-3xl font-bold tracking-tight">Account & Settings</h2>

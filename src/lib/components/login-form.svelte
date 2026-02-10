@@ -14,6 +14,7 @@
 	import { authService } from '$lib/services/auth.service';
 	import { goto } from '$app/navigation';
 	import { userStore } from '$lib/stores/userStore.svelte';
+	import secureProjectSession from '$lib/services/secureProjectSession';
 
 	let {
 		ref = $bindable(null),
@@ -38,6 +39,7 @@
 			// Fetch profile to populate store immediately
 			const profile = await authService.getProfile();
 			userStore.setUser(profile.data);
+			secureProjectSession.lockProjects();
 			goto('/');
 		} catch (err: any) {
 			console.error(err);

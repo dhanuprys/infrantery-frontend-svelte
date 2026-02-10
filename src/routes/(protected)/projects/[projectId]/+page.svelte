@@ -5,7 +5,17 @@
 	import type { ProjectResponse, DiagramResponse } from '$lib/types/api';
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
-	import { Plus, ArrowRight, FileText, Network, Settings } from '@lucide/svelte';
+	import {
+		Plus,
+		ArrowRight,
+		FileText,
+		Network,
+		Settings,
+		ShieldCheck,
+		Clock,
+		ChevronRight,
+		ArrowLeft
+	} from '@lucide/svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Badge } from '$lib/components/ui/badge';
 	import { toast } from 'svelte-sonner';
@@ -13,6 +23,10 @@
 	import type { PageProps } from './$types';
 	import ProjectHeader from '$lib/components/project/layouts/ProjectHeader.svelte';
 	import ProjectUpdateDialog from '$lib/components/projects/project-update-dialog.svelte';
+	import CreateDiagramDialog from '$lib/components/project/dialogs/CreateDiagramDialog.svelte';
+	import { goto } from '$app/navigation';
+	import { cryptoService } from '$lib/services/cryptoService';
+	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
 
 	let { params }: PageProps = $props();
 	let projectId = $derived(params.projectId);
@@ -21,6 +35,46 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let isUpdateDialogOpen = $state(false);
+	let createDiagramDialogOpen = $state(false);
+
+	async function handleCreateDiagram(name: string, description: string) {
+		try {
+			if (!projectSessionStore.keys) {
+				throw new Error('Project keys not found. Please re-authorize.');
+			}
+
+			// 1. Prepare default data
+			const defaultData = JSON.stringify({ nodes: [], edges: [] });
+
+			// 2. Encrypt
+			const encrypted = await cryptoService.encryptWithPublicKey(
+				projectSessionStore.keys.encryptionPublicKey,
+				defaultData
+			);
+
+			// 3. Sign
+			const signature = await cryptoService.signData(
+				projectSessionStore.keys.signingPrivateKey,
+				encrypted
+			);
+
+			// 4. Create via Service
+			const res = await diagramService.createDiagram(projectId, {
+				diagram_name: name,
+				description: description,
+				encrypted_data: encrypted,
+				encrypted_data_signature: signature
+			});
+
+			// 5. Redirect
+			toast.success('Diagram created');
+			goto(`/projects/${projectId}/diagrams/${res.data.id}`);
+		} catch (err: any) {
+			console.error('Failed to create diagram:', err);
+			toast.error(err.message || 'Failed to create diagram');
+			throw err;
+		}
+	}
 
 	async function loadData() {
 		loading = true;
@@ -59,7 +113,7 @@
 
 <div style:height="100vh" class="flex flex-col">
 	<ProjectHeader />
-	<div class="h-full space-y-8 p-8">
+	<div class="container mx-auto h-full max-w-7xl space-y-8 p-8">
 		<!-- Header -->
 		<div class="flex items-center justify-between space-y-2">
 			<div>
@@ -67,12 +121,24 @@
 					{#if loading}
 						<Skeleton class="h-9 w-64" />
 					{:else if project}
-						<h2 class="text-3xl font-bold tracking-tight">{project.name}</h2>
-						<Badge variant="outline">Project</Badge>
-						<Button variant="ghost" size="icon" onclick={() => (isUpdateDialogOpen = true)}>
-							<Settings class="h-4 w-4" />
-							<span class="sr-only">Edit Project</span>
-						</Button>
+						<div class="flex flex-col gap-1">
+							<Button
+								variant="ghost"
+								size="sm"
+								href="/projects"
+								class="-ml-3 w-fit text-muted-foreground hover:text-foreground"
+							>
+								<ArrowLeft class="mr-2 h-4 w-4" />
+								Back to Projects
+							</Button>
+							<div class="flex items-center gap-2">
+								<h2 class="text-3xl font-bold tracking-tight">{project.name}</h2>
+								<Button variant="ghost" size="icon" onclick={() => (isUpdateDialogOpen = true)}>
+									<Settings class="h-4 w-4" />
+									<span class="sr-only">Edit Project</span>
+								</Button>
+							</div>
+						</div>
 					{/if}
 				</div>
 
@@ -87,78 +153,87 @@
 					<FileText class="mr-2 h-4 w-4" />
 					Go to Notes
 				</Button>
-				<Button>
+				<Button onclick={() => (createDiagramDialogOpen = true)}>
 					<Plus class="mr-2 h-4 w-4" />
 					New Diagram
 				</Button>
 			</div>
 		</div>
 
-		<!-- Diagrams Grid -->
-		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+		<div class="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
 			{#if loading}
-				{#each Array(3) as _}
-					<Card.Root>
-						<Card.Header class="grid grid-cols-[1fr_110px] items-start gap-4 space-y-0">
-							<div class="space-y-1">
-								<Skeleton class="h-5 w-32" />
-								<Skeleton class="h-4 w-full" />
+				{#each Array(4) as _}
+					<Card.Root class="flex flex-row items-center justify-between overflow-hidden">
+						<Card.Header class="flex-1 gap-2 border-r bg-muted/40 p-4">
+							<div class="flex items-center justify-between">
+								<Skeleton class="h-4 w-20" />
+								<Skeleton class="h-4 w-4 rounded-full" />
 							</div>
+							<Skeleton class="h-6 w-3/4" />
 						</Card.Header>
-						<Card.Content>
+						<Card.Content class="w-40 p-4">
 							<Skeleton class="h-4 w-full" />
 						</Card.Content>
-						<Card.Footer>
+						<Card.Footer class="w-40 bg-muted/10 p-4">
 							<Skeleton class="h-9 w-full" />
 						</Card.Footer>
 					</Card.Root>
 				{/each}
 			{:else if error}
-				<div class="col-span-full rounded-md bg-destructive/15 p-4 text-destructive">
-					{error}
-					<Button variant="link" onclick={loadData} class="ml-2 text-destructive underline">
-						Retry
-					</Button>
+				<div
+					class="col-span-full flex flex-col items-center justify-center rounded-lg border border-destructive/20 bg-destructive/5 p-8 text-center"
+				>
+					<p class="mb-4 font-medium text-destructive">{error}</p>
+					<Button variant="outline" onclick={loadData}>Retry</Button>
 				</div>
 			{:else if diagrams.length === 0}
 				<Card.Root
-					class="col-span-full flex min-h-[400px] flex-col items-center justify-center border-dashed p-8 text-center"
+					class="col-span-full flex min-h-[400px] flex-col items-center justify-center border-dashed bg-muted/30 p-8 text-center"
 				>
-					<div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-accent">
-						<Network class="h-6 w-6" />
+					<div class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+						<Network class="h-8 w-8 text-primary" />
 					</div>
-					<h3 class="mt-4 text-lg font-semibold">No diagrams yet</h3>
-					<p class="mt-2 mb-4 text-sm text-muted-foreground">
-						Create a diagram to start visualizing your architecture.
+					<h3 class="text-xl font-semibold">No diagrams yet</h3>
+					<p class="mt-2 mb-6 max-w-sm text-sm text-muted-foreground">
+						Create your first diagram to start visualizing your infrastructure.
 					</p>
-					<Button>
+					<Button onclick={() => (createDiagramDialogOpen = true)} size="lg">
 						<Plus class="mr-2 h-4 w-4" />
 						Create Diagram
 					</Button>
 				</Card.Root>
 			{:else}
-				{#each diagrams as diagram}
-					<Card.Root class="flex flex-col justify-between transition-all hover:shadow-md">
-						<Card.Header>
-							<Card.Title class="truncate text-xl font-semibold">{diagram.diagram_name}</Card.Title>
-							<Card.Description class="line-clamp-2 h-10 text-sm text-muted-foreground">
+				{#each diagrams as diagram (diagram.id)}
+					<Card.Root
+						class="group flex flex-row items-center justify-between transition-all hover:border-primary/50 hover:shadow-lg"
+					>
+						<Card.Header class="flex-1 space-y-1 px-6">
+							<div class="mb-2 flex items-center gap-2">
+								<Badge
+									variant="secondary"
+									class="flex items-center gap-1 font-normal text-muted-foreground"
+								>
+									<ShieldCheck class="h-3 w-3 text-green-500" />
+									Encrypted
+								</Badge>
+								<div class="flex items-center gap-1 text-xs text-muted-foreground">
+									<Clock class="h-3.5 w-3.5" />
+									<span>{new Date(diagram.updated_at).toLocaleDateString()}</span>
+								</div>
+							</div>
+							<Card.Title class="line-clamp-1 text-xl font-bold">{diagram.diagram_name}</Card.Title>
+							<Card.Description class="line-clamp-1 min-h-5 text-sm leading-relaxed">
 								{diagram.description || 'No description provided.'}
 							</Card.Description>
 						</Card.Header>
-						<Card.Content>
-							<div class="flex items-center text-xs text-muted-foreground">
-								<span class="truncate">
-									Updated {new Date(diagram.updated_at).toLocaleDateString()}
-								</span>
-							</div>
-						</Card.Content>
-						<Card.Footer>
+
+						<Card.Footer class="p-6">
 							<Button
 								href={`/projects/${projectId}/diagrams/${diagram.id}`}
-								variant="secondary"
-								class="group w-full"
+								class="group transition-colors"
+								variant="outline"
 							>
-								Open Diagram
+								Open
 								<ArrowRight class="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
 							</Button>
 						</Card.Footer>
@@ -170,3 +245,4 @@
 </div>
 
 <ProjectUpdateDialog bind:open={isUpdateDialogOpen} {project} onSuccess={handleUpdateSuccess} />
+<CreateDiagramDialog bind:open={createDiagramDialogOpen} onsubmit={handleCreateDiagram} />

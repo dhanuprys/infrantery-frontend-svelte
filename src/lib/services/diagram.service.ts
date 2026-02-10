@@ -47,5 +47,22 @@ export const diagramService = {
 
 	async deleteDiagram(project_id: string, diagram_id: string): Promise<void> {
 		await apiClient.delete(`/projects/${project_id}/diagrams/${diagram_id}`);
+	},
+
+	async updateDiagram(
+		project_id: string,
+		diagram_id: string,
+		data: {
+			diagram_name?: string;
+			description?: string;
+			encrypted_data?: string;
+			encrypted_data_signature?: string;
+		}
+	): Promise<APIResponse<DiagramResponse>> {
+		const response = await apiClient.put<APIResponse<DiagramResponse>>(
+			`/projects/${project_id}/diagrams/${diagram_id}`,
+			data
+		);
+		return response.data;
 	}
 };

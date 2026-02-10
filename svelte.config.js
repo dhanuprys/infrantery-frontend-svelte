@@ -9,7 +9,7 @@ const config = {
 		adapter: adapter()
 	},
 	optimizeDeps: {
-		exclude: ["svelte-codemirror-editor", "codemirror", "@codemirror/language-markdown"],
+		exclude: ['svelte-codemirror-editor', 'codemirror', '@codemirror/language-markdown']
 	}
 };
 

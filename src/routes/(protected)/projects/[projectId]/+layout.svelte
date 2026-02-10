@@ -38,7 +38,7 @@
 				!projectSigningPrivateKey) &&
 			!window.location.href.endsWith('/authorize')
 		) {
-			return goto(`/projects/${params.projectId}/authorize`);
+			return goto(`/projects/${params.projectId}/authorize`, { replaceState: true });
 		}
 
 		projectSessionStore.setKeys({

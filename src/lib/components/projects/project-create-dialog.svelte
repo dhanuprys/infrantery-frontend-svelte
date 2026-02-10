@@ -16,6 +16,16 @@
 	let masterPassword = $state('');
 	let error = $state<string | null>(null);
 
+	const validations = $derived({
+		length: masterPassword.length >= 8,
+		uppercase: /[A-Z]/.test(masterPassword),
+		lowercase: /[a-z]/.test(masterPassword),
+		number: /[0-9]/.test(masterPassword),
+		special: /[^A-Za-z0-9]/.test(masterPassword)
+	});
+
+	const isValid = $derived(Object.values(validations).every(Boolean));
+
 	async function handleSubmit(e: Event) {
 		e.preventDefault();
 		loading = true;
@@ -106,9 +116,75 @@
 					bind:value={masterPassword}
 					placeholder="Enter a strong master password"
 					required
-					minlength={8}
 				/>
-				<p class="text-xs text-muted-foreground">
+
+				<div class="space-y-2 rounded-md border bg-muted/30 p-3 text-xs">
+					<p class="mb-2 font-medium text-muted-foreground">Password Requirements:</p>
+					<ul class="space-y-1">
+						<li
+							class="flex items-center gap-2 {validations.length
+								? 'text-green-500'
+								: 'text-muted-foreground'}"
+						>
+							<div
+								class="h-1.5 w-1.5 rounded-full {validations.length
+									? 'bg-green-500'
+									: 'bg-muted-foreground'}"
+							></div>
+							At least 8 characters
+						</li>
+						<li
+							class="flex items-center gap-2 {validations.uppercase
+								? 'text-green-500'
+								: 'text-muted-foreground'}"
+						>
+							<div
+								class="h-1.5 w-1.5 rounded-full {validations.uppercase
+									? 'bg-green-500'
+									: 'bg-muted-foreground'}"
+							></div>
+							Contains uppercase letter
+						</li>
+						<li
+							class="flex items-center gap-2 {validations.lowercase
+								? 'text-green-500'
+								: 'text-muted-foreground'}"
+						>
+							<div
+								class="h-1.5 w-1.5 rounded-full {validations.lowercase
+									? 'bg-green-500'
+									: 'bg-muted-foreground'}"
+							></div>
+							Contains lowercase letter
+						</li>
+						<li
+							class="flex items-center gap-2 {validations.number
+								? 'text-green-500'
+								: 'text-muted-foreground'}"
+						>
+							<div
+								class="h-1.5 w-1.5 rounded-full {validations.number
+									? 'bg-green-500'
+									: 'bg-muted-foreground'}"
+							></div>
+							Contains number
+						</li>
+						<li
+							class="flex items-center gap-2 {validations.special
+								? 'text-green-500'
+								: 'text-muted-foreground'}"
+						>
+							<div
+								class="h-1.5 w-1.5 rounded-full {validations.special
+									? 'bg-green-500'
+									: 'bg-muted-foreground'}"
+							></div>
+							Contains special character
+						</li>
+					</ul>
+				</div>
+
+				<p class="mt-1 text-xs text-muted-foreground">
 					This password is used to encrypt your project's private keys. <strong
 						class="text-destructive">It is never sent to the server.</strong
 					> If you lose it, you lose access to your project data.
@@ -117,7 +193,7 @@
 
 			<Dialog.Footer>
 				<Button type="button" variant="outline" onclick={() => (open = false)}>Cancel</Button>
-				<Button type="submit" disabled={loading}>
+				<Button type="submit" disabled={loading || !isValid}>
 					{loading ? 'Creating...' : 'Create Project'}
 				</Button>
 			</Dialog.Footer>
