@@ -18,11 +18,16 @@
 	import { mode } from 'mode-watcher';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import { nodeTypes } from '$lib/data/node-types';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 
 	let colorMode = $derived(mode.current || 'light');
 	const { screenToFlowPosition, getViewport } = useSvelteFlow();
 
 	let viewport = $derived(getViewport());
+
+	beforeNavigate(() => {
+		diagramStore.setActiveObject(null);
+	});
 
 	const onbeforedelete: OnBeforeDelete = async ({ nodes: deletedNodes, edges: _edges }) => {
 		let remainingNodes = [...diagramStore.nodes];

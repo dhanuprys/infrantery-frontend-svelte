@@ -1,6 +1,7 @@
 <script>
 	import GalleryVerticalEndIcon from '@lucide/svelte/icons/gallery-vertical-end';
 	import SignupForm from '$lib/components/signup-form.svelte';
+	import RegisterBackground from '$lib/assets/register.png';
 </script>
 
 <div class="grid min-h-svh lg:grid-cols-2">
@@ -21,11 +22,11 @@
 			</div>
 		</div>
 	</div>
-	<div class="relative hidden bg-muted lg:block">
+	<div class="relative hidden max-h-full max-w-full overflow-hidden bg-muted lg:block">
 		<img
-			src="/placeholder.svg"
+			src={RegisterBackground}
 			alt=""
-			class="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+			class="absolute inset-0 h-full w-full scale-125 object-cover dark:brightness-[0.2] dark:grayscale"
 		/>
 	</div>
 </div>
