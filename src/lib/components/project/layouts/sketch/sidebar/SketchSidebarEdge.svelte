@@ -2,10 +2,8 @@
 	import type { Edge } from '@xyflow/svelte';
 	import { useEdges } from '@xyflow/svelte';
 	import * as Field from '$lib/components/ui/field';
-	import * as Accordion from '$lib/components/ui/accordion';
 	import { Input } from '$lib/components/ui/input';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { Separator } from '$lib/components/ui/separator';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Select from '$lib/components/ui/select';
 
@@ -14,8 +12,8 @@
 	const edges = useEdges();
 	const currentEdge = $derived(edges.current.find((n) => n.id === edge.id));
 
-	let labelValue = $state(edge.label || '');
-	let edgeType = $state(edge.type || '');
+	let labelValue = $derived(edge.label || '');
+	let edgeType = $derived(edge.type || '');
 
 	function updateLabel(e: Event) {
 		if (labelValue.length > 20) return;

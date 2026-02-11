@@ -60,7 +60,7 @@
 				<Label>Icon</Label>
 				<ScrollArea class="h-72 w-full rounded-md">
 					<div class="grid grid-cols-6 gap-2 pt-4 pr-4">
-						{#each Object.entries(NoteIcons) as [key, Icon]}
+						{#each Object.entries(NoteIcons) as [key, Icon] (key)}
 							<button
 								type="button"
 								class={cn(

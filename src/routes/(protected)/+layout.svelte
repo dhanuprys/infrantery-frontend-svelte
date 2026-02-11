@@ -15,7 +15,7 @@
 			console.error('Failed to load profile', error);
 			userStore.clearUser();
 			secureProjectSession.lockProjects();
-			goto('/login');
+			return goto('/login');
 		}
 	});
 </script>

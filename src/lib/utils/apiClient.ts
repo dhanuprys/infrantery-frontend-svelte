@@ -1,13 +1,15 @@
-import { goto } from '$app/navigation';
 import axios, { type InternalAxiosRequestConfig } from 'axios';
+import { env } from '$env/dynamic/public';
 
 // Extend AxiosRequestConfig to include our custom retry flag
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
 	_retry?: boolean;
 }
 
+const baseUrl = env.PUBLIC_API_BASE_URL || 'http://localhost:8085';
+
 export const apiClient = axios.create({
-	baseURL: 'http://localhost:8085/api/v1',
+	baseURL: `${baseUrl.replace(/\/$/, '')}/api/v1`,
 	withCredentials: true,
 	headers: {
 		'Content-Type': 'application/json'

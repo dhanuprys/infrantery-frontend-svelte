@@ -3,7 +3,7 @@
 	import * as Sketch from '$lib/components/project/layouts/sketch';
 	import ProjectHeader from '$lib/components/project/layouts/ProjectHeader.svelte';
 	import { SvelteFlowProvider } from '@xyflow/svelte';
-	import { onDestroy, onMount, untrack } from 'svelte';
+	import { onDestroy, untrack } from 'svelte';
 	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
 	import { diagramService } from '$lib/services/diagram.service';
 	import { cryptoService } from '$lib/services/cryptoService';

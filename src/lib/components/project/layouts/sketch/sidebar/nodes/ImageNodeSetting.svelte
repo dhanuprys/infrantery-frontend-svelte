@@ -5,7 +5,7 @@
 	import * as Accordion from '$lib/components/ui/accordion';
 	import { Input } from '$lib/components/ui/input';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { ChevronsUpDownIcon, ExternalLink, Network, ShieldCheck } from '@lucide/svelte';
+	import { ExternalLink, Network, ShieldCheck } from '@lucide/svelte';
 	import { nodeImages } from '$lib/data/node-images';
 	import { Separator } from '$lib/components/ui/separator';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -22,7 +22,7 @@
 
 	let { node }: { node: Node<ImageNodeProps, 'number'> } = $props();
 	const { fitView } = useSvelteFlow();
-	let labelValue = $state(node.data.label);
+	let labelValue = $derived(node.data.label);
 	let isCreatingChild = $state(false);
 
 	function updateLabel(e: Event) {

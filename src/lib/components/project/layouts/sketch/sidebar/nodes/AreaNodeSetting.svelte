@@ -5,10 +5,9 @@
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import type { AreaNodeProps } from '$lib/components/project/digrams/nodes/AreaNode.svelte';
-	import { Textarea } from '$lib/components/ui/textarea';
 
 	let { node }: { node: Node<AreaNodeProps, 'number'> } = $props();
-	let contentValue = $state(node.data.label);
+	let contentValue = $derived(node.data.label);
 
 	function updateLabel(e: Event) {
 		contentValue = (e.target as HTMLInputElement).value;

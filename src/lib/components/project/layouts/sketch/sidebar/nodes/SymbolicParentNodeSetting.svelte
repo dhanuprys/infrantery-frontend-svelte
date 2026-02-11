@@ -11,7 +11,7 @@
 	import { useSvelteFlow } from '@xyflow/svelte';
 
 	let { node }: { node: Node<SymbolicParentNodeProps, 'number'> } = $props();
-	let labelValue = $state(node.data.label);
+	let labelValue = $derived(node.data.label);
 	const { fitView } = useSvelteFlow();
 
 	function updateLabel(e: Event) {

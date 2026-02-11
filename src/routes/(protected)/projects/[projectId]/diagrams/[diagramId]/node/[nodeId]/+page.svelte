@@ -17,16 +17,11 @@
 	import { untrack } from 'svelte';
 
 	let { data } = $props();
-	let node = $state(data.node);
+	let node = $derived(data.node);
 	let readme = $state('');
 	let dict = $state<{ key: string; value: string }[]>([]);
 	let isSaving = $state(false);
 	let isLoading = $state(true);
-
-	// Effect 1: Sync local node state with prop data
-	$effect(() => {
-		node = data.node;
-	});
 
 	// Effect 2: Decrypt when node or keys change
 	$effect(() => {

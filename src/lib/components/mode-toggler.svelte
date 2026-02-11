@@ -8,8 +8,7 @@
 	import githubLight from 'highlight.js/styles/github.css?inline';
 	import githubDark from 'highlight.js/styles/github-dark.css?inline';
 
-	let colorMode = $derived(mode.current === 'dark' ? githubDark : githubLight);
-	$inspect(mode.current);
+	const colorMode = $derived(mode.current === 'dark' ? githubDark : githubLight);
 </script>
 
 <svelte:head>

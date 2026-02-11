@@ -40,7 +40,7 @@
 
 <div class="flex flex-col justify-end space-y-1 border-r bg-background p-2 text-foreground">
 	<div class="flex flex-col gap-2">
-		{#each shapes as shape}
+		{#each shapes as shape (shape.label)}
 			{@render shapeButton(shape)}
 		{/each}
 	</div>

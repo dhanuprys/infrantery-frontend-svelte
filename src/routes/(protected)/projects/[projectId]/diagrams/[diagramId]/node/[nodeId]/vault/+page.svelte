@@ -133,34 +133,6 @@
 		}
 	}
 
-	async function handleCopy(item: NodeVaultResponse) {
-		decryptingId = item.id;
-		const data = await decryptItem(item);
-		decryptingId = null;
-
-		if (data) {
-			// Determine what to copy based on type
-			let textToCopy = '';
-			if (item.type === 'USERNAME_PASSWORD') {
-				textToCopy = data.password;
-				toast.info('Password copied to clipboard');
-			} else if (item.type === 'SSH') {
-				textToCopy = data.private_key;
-				toast.info('Private key copied to clipboard');
-			} else if (item.type === 'TEXT') {
-				textToCopy = data.content;
-				toast.info('Content copied to clipboard');
-			} else if (item.type === 'FREE_FIELD') {
-				textToCopy = JSON.stringify(data.fields, null, 2);
-				toast.info('Fields copied as JSON');
-			}
-
-			if (textToCopy) {
-				await navigator.clipboard.writeText(textToCopy);
-			}
-		}
-	}
-
 	async function handleEdit(item: NodeVaultResponse) {
 		decryptingId = item.id;
 		const data = await decryptItem(item);
@@ -210,7 +182,7 @@
 						</Button>
 					</DropdownMenu.Trigger>
 					<DropdownMenu.Content align="end">
-						{#each Object.entries(vaultTypes) as [key, type]}
+						{#each Object.entries(vaultTypes) as [key, type] (key)}
 							<DropdownMenu.Item onclick={() => openCreateDialog(key)}>
 								<type.icon class="mr-2 h-4 w-4" />
 								Create {type.label}
@@ -240,7 +212,7 @@
 				</div>
 			{:else}
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{#each items as item}
+					{#each items as item (item.id)}
 						{@const typeDef = vaultTypes[item.type]}
 						<Card.Root>
 							<Card.Header class="flex flex-row items-start justify-between space-y-0 pb-2">
