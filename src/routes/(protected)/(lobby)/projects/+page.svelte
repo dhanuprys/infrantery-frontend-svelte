@@ -149,17 +149,6 @@
 								<ShieldCheck class="h-3 w-3 text-green-500" />
 								Encrypted
 							</Badge>
-							<DropdownMenu.Root>
-								<DropdownMenu.Trigger
-									class="-mr-2 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-								>
-									<MoreVertical class="h-4 w-4" />
-								</DropdownMenu.Trigger>
-								<DropdownMenu.Content align="end">
-									<DropdownMenu.Item>Settings</DropdownMenu.Item>
-									<DropdownMenu.Item class="text-destructive">Archive</DropdownMenu.Item>
-								</DropdownMenu.Content>
-							</DropdownMenu.Root>
 						</div>
 						<Card.Title class="line-clamp-1 text-xl font-bold">{project.name}</Card.Title>
 						<Card.Description class="line-clamp-2 min-h-10 text-sm leading-relaxed">

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { page } from '$app/state';
 	import { projectService } from '$lib/services/project.service';
 	import { diagramService } from '$lib/services/diagram.service';
 	import type { ProjectResponse, DiagramResponse } from '$lib/types/api';

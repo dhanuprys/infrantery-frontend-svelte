@@ -22,6 +22,7 @@
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
 
+	let { appType }: { appType?: 'diagram' | 'note' | 'vault' } = $props();
 	let breadcrumbs = $state<BreadcrumbItem[]>([]);
 	// let isLoading = $state(false);
 
@@ -114,45 +115,62 @@
 		<div class="flex items-center gap-4">
 			<div class="flex items-center gap-2">
 				<h2 class="font-semibold">INFRANTERY</h2>
-				<span class="text-xs text-muted-foreground">by DedanLabs</span>
+				{#if appType}
+					<span class=" border bg-muted/50 px-2 font-mono uppercase">{appType}</span>
+				{:else}
+					<span class="text-xs text-muted-foreground">by DedanLabs</span>
+				{/if}
 			</div>
 			<Separator orientation="vertical" class="h-4" />
+
 			<Breadcrumb.Root>
 				<Breadcrumb.List>
 					{#each breadcrumbs as breadcrumb, i (breadcrumb.label + i)}
 						{@const Icon = getIcon(breadcrumb.type)}
 						<Breadcrumb.Item>
 							{#if breadcrumb.siblings && breadcrumb.siblings.length > 0}
-								<DropdownMenu.Root>
-									<DropdownMenu.Trigger
-										class="flex items-center gap-1 transition-colors hover:text-foreground/80"
+								<div class="group flex items-center">
+									<div
+										class="flex items-center gap-1 transition-colors group-hover:text-foreground/80"
 									>
-										<div class="flex items-center gap-2">
+										<button
+											type="button"
+											class="relative flex items-center gap-2 rounded-sm px-2 py-1.5 text-xs outline-hidden select-none group-hover:cursor-pointer data-highlighted:bg-accent data-highlighted:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:ps-8 data-[variant=destructive]:text-destructive data-[variant=destructive]:data-highlighted:bg-destructive/10 data-[variant=destructive]:data-highlighted:text-destructive dark:data-[variant=destructive]:data-highlighted:bg-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&_svg:not([class*='text-'])]:text-muted-foreground data-[variant=destructive]:*:[svg]:!text-destructive"
+											onclick={() => goto(getHref(breadcrumb, page.params.projectId!))}
+										>
 											<Icon class="size-3" />
 											<span
 												class="max-w-[150px] truncate font-mono text-xs"
-												title={breadcrumb.label}
+												title={breadcrumb.label}>{breadcrumb.label}</span
 											>
-												{breadcrumb.label}
-											</span>
-										</div>
-										<ChevronsUpDownIcon class="size-3 opacity-50" />
-									</DropdownMenu.Trigger>
-									<DropdownMenu.Content align="start" class="max-h-[300px] overflow-y-auto">
-										{#each breadcrumb.siblings as sibling (sibling.id || sibling.label)}
-											<DropdownMenu.Item
-												class="cursor-pointer"
-												onSelect={() => {
-													if (sibling.id) {
-														goto(getHref(sibling, page.params.projectId!));
-													}
-												}}
+										</button>
+									</div>
+									<DropdownMenu.Root>
+										<DropdownMenu.Trigger class="flex items-center">
+											<div
+												class="rounded-sm border p-1 hover:bg-accent hover:text-accent-foreground"
 											>
-												<span class={sibling.active ? 'font-medium' : ''}>{sibling.label}</span>
-											</DropdownMenu.Item>
-										{/each}
-									</DropdownMenu.Content>
-								</DropdownMenu.Root>
+												<ChevronsUpDownIcon class="size-3 opacity-50 group-hover:opacity-100" />
+											</div>
+										</DropdownMenu.Trigger>
+										<DropdownMenu.Content align="start" class="max-h-[300px] overflow-y-auto">
+											<DropdownMenu.Label>Navigate to</DropdownMenu.Label>
+											<DropdownMenu.Separator />
+											{#each breadcrumb.siblings as sibling (sibling.id || sibling.label)}
+												<DropdownMenu.Item
+													class="cursor-pointer"
+													onSelect={() => {
+														if (sibling.id) {
+															goto(getHref(sibling, page.params.projectId!));
+														}
+													}}
+												>
+													<span class={sibling.active ? 'font-medium' : ''}>{sibling.label}</span>
+												</DropdownMenu.Item>
+											{/each}
+										</DropdownMenu.Content>
+									</DropdownMenu.Root>
+								</div>
 							{:else}
 								<Breadcrumb.Link href={getHref(breadcrumb, page.params.projectId!)}>
 									<div class="flex items-center gap-2">

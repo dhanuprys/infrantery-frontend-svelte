@@ -292,7 +292,7 @@
 </script>
 
 <div style:height="100vh" class="flex flex-col">
-	<ProjectHeader />
+	<ProjectHeader appType="note" />
 	<Document.ToolBar {projectId} status={saveStatus} {lastSaved} />
 	<main class="flex flex-1">
 		<Resizable.PaneGroup direction="horizontal">

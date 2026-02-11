@@ -41,7 +41,7 @@ class SecureProjectSession {
 			const encryptedValue = await cryptoService.encryptWithPassphrase(this.secretKey, value);
 			sessionStorage.setItem(
 				await this.generateKey(key, projectId),
-				JSON.stringify(encryptedValue)
+				btoa(JSON.stringify(encryptedValue))
 			);
 		} catch (error) {
 			return;
@@ -54,7 +54,10 @@ class SecureProjectSession {
 			if (!encryptedValue) {
 				return null;
 			}
-			return await cryptoService.decryptWithPassphrase(this.secretKey, JSON.parse(encryptedValue));
+			return await cryptoService.decryptWithPassphrase(
+				this.secretKey,
+				JSON.parse(atob(encryptedValue))
+			);
 		} catch (error) {
 			return null;
 		}

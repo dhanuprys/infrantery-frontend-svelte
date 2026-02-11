@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import ProjectHeader from '$lib/components/project/layouts/ProjectHeader.svelte';
 	import * as Vault from '$lib/components/project/layouts/vault';
+	import * as Empty from '$lib/components/ui/empty';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
@@ -191,7 +192,7 @@
 </script>
 
 <div class="flex h-screen flex-col overflow-hidden bg-background">
-	<ProjectHeader />
+	<ProjectHeader appType="vault" />
 
 	<div class="flex-1 overflow-auto p-6">
 		<div class="container mx-auto max-w-7xl space-y-6">
@@ -224,16 +225,18 @@
 					<Loader2 class="h-8 w-8 animate-spin text-muted-foreground" />
 				</div>
 			{:else if items.length === 0}
-				<div
-					class="flex h-full flex-col items-center justify-center text-center text-muted-foreground"
-				>
-					<div class="mb-4 rounded-full bg-muted p-4">
-						<Lock class="h-8 w-8" />
-					</div>
-					<h3 class="text-lg font-semibold text-foreground">Vault is Empty</h3>
-					<p class="mt-1 mb-4 max-w-sm">
-						No secrets stored for this node yet. Use the "Add Item" button to create one.
-					</p>
+				<div class="flex h-full flex-col items-center justify-center">
+					<Empty.Root>
+						<Empty.Header>
+							<Empty.Media variant="icon">
+								<Lock />
+							</Empty.Media>
+							<Empty.Title>Vault is Empty</Empty.Title>
+							<Empty.Description>
+								No secrets stored for this node yet. Use the "Add Item" button to create one.
+							</Empty.Description>
+						</Empty.Header>
+					</Empty.Root>
 				</div>
 			{:else}
 				<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -147,7 +147,7 @@
 </script>
 
 <div class="flex h-screen flex-col overflow-hidden bg-background">
-	<ProjectHeader />
+	<ProjectHeader appType="diagram" />
 	<div class="flex-1 overflow-auto p-6">
 		<div class="container mx-auto max-w-7xl space-y-6">
 			<div class="flex items-center justify-between">

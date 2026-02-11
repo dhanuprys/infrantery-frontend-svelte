@@ -12,7 +12,7 @@
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import type { PageProps } from './$types';
-	import { ShieldCheck, Lock, Loader2, KeyRound } from '@lucide/svelte';
+	import { ShieldCheck, Lock, Loader2, KeyRound, ArrowLeftIcon } from '@lucide/svelte';
 
 	let { params }: PageProps = $props();
 	let projectId = $derived(params.projectId);
@@ -99,7 +99,10 @@
 
 <div class="relative flex min-h-screen w-full items-center justify-center bg-background p-4">
 	<header class="absolute top-0 right-0 left-0 flex items-center justify-between p-6">
-		<Button variant="ghost" onclick={() => goto('/projects')}>Back to Projects</Button>
+		<Button variant="ghost" onclick={() => goto('/projects')}
+			><ArrowLeftIcon class="mr-2 h-4 w-4" />
+			Back to Projects
+		</Button>
 	</header>
 	<div class="w-full max-w-lg">
 		<div class="mb-8 text-center">

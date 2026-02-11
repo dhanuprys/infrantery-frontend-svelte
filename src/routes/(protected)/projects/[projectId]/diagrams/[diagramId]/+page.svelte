@@ -162,7 +162,7 @@
 </script>
 
 <div style:height="100vh" class="flex flex-col">
-	<ProjectHeader />
+	<ProjectHeader appType="diagram" />
 	<SvelteFlowProvider>
 		<main class="flex flex-1">
 			<Resizable.PaneGroup direction="horizontal">
