@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { ImageNodeProps } from '$lib/components/project/digrams/nodes/ImageNode.svelte';
-	import type { Node } from '@xyflow/svelte';
+	import { useSvelteFlow, type Node } from '@xyflow/svelte';
 	import * as Field from '$lib/components/ui/field';
 	import * as Accordion from '$lib/components/ui/accordion';
 	import { Input } from '$lib/components/ui/input';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { ChevronsUpDownIcon, ExternalLink, Network } from '@lucide/svelte';
+	import { ChevronsUpDownIcon, ExternalLink, Network, ShieldCheck } from '@lucide/svelte';
 	import { nodeImages } from '$lib/data/node-images';
 	import { Separator } from '$lib/components/ui/separator';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -18,8 +18,10 @@
 	import type { DiagramData } from '$lib/types';
 	import { NodeTypeKey } from '$lib/data/node-types';
 	import { ObjectId } from 'bson';
+	import { nodeService } from '$lib/services/node.service';
 
 	let { node }: { node: Node<ImageNodeProps, 'number'> } = $props();
+	const { fitView } = useSvelteFlow();
 	let labelValue = $state(node.data.label);
 	let isCreatingChild = $state(false);
 
@@ -76,6 +78,7 @@
 		if (node.data.childDiagramId) {
 			goto(`/projects/${projectId}/diagrams/${node.data.childDiagramId}`);
 			toast.success('Child diagram opened');
+			setTimeout(() => fitView({ padding: 0.1 }), 500);
 			return;
 		}
 
@@ -221,28 +224,90 @@
 			<Field.Description>Label for the node.</Field.Description>
 		</Field.Field>
 	</Field.Group>
-	<Field.Group>
-		<Field.Field>
-			<Button
-				variant="outline"
-				class="w-full justify-start"
-				onclick={handleChildDiagram}
-				disabled={isCreatingChild}
-			>
-				{#if node.data.childDiagramId}
-					<ExternalLink class="mr-2 size-4" />
-					Open Child Diagram
-				{:else}
-					<Network class="mr-2 size-4" />
-					{isCreatingChild ? 'Creating...' : 'Create Child Diagram'}
-				{/if}
-			</Button>
-		</Field.Field>
-	</Field.Group>
 
 	<Field.Group>
 		<Field.Field>
-			<Button id="delete-btn" variant="destructive" onclick={deleteNode}>Delete</Button>
+			<Field.Label>Node Actions</Field.Label>
+			<div class="grid gap-2">
+				<Button
+					variant="outline"
+					class="w-full justify-start"
+					onclick={async () => {
+						try {
+							await nodeService.initializeNode(
+								page.params.projectId!,
+								page.params.diagramId!,
+								node.id
+							);
+							goto(
+								`/projects/${page.params.projectId}/diagrams/${page.params.diagramId}/node/${node.id}`
+							);
+						} catch (e: any) {
+							toast.error(e.message || 'Failed to initialize node');
+						}
+					}}
+				>
+					<ExternalLink class="mr-2 size-4" />
+					Node Detail
+				</Button>
+
+				<Button
+					variant="outline"
+					class="w-full justify-start"
+					onclick={async () => {
+						try {
+							await nodeService.initializeNode(
+								page.params.projectId!,
+								page.params.diagramId!,
+								node.id
+							);
+							goto(
+								`/projects/${page.params.projectId}/diagrams/${page.params.diagramId}/node/${node.id}/vault`
+							);
+						} catch (e: any) {
+							toast.error(e.message || 'Failed to initialize node');
+						}
+					}}
+				>
+					<ShieldCheck class="mr-2 size-4" />
+					Open Vault
+				</Button>
+
+				<div class="space-y-1 pt-2">
+					<Button
+						variant="outline"
+						class="w-full justify-start"
+						onclick={handleChildDiagram}
+						disabled={isCreatingChild}
+					>
+						{#if node.data.childDiagramId}
+							<ExternalLink class="mr-2 size-4" />
+							Open Child Diagram
+						{:else}
+							<Network class="mr-2 size-4" />
+							{isCreatingChild ? 'Creating...' : 'Create Child Diagram'}
+						{/if}
+					</Button>
+					<p class="text-xs text-muted-foreground">
+						This will create a new diagram inside this node.
+					</p>
+				</div>
+			</div>
+		</Field.Field>
+		<Field.Field>
+			<Button
+				id="delete-btn"
+				variant="destructive"
+				class="w-full justify-start"
+				onclick={async () => {
+					try {
+						await nodeService.deleteNode(page.params.projectId!, page.params.diagramId!, node.id);
+						deleteNode();
+					} catch (e: any) {
+						toast.error(e.message || 'Failed to delete node');
+					}
+				}}>Delete Node</Button
+			>
 		</Field.Field>
 	</Field.Group>
 </Field.Set>

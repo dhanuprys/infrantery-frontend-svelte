@@ -7,6 +7,7 @@
 		getIncomers,
 		getOutgoers,
 		MiniMap,
+		Panel,
 		SvelteFlow,
 		useSvelteFlow,
 		type Edge,
@@ -19,7 +20,9 @@
 	import { nodeTypes } from '$lib/data/node-types';
 
 	let colorMode = $derived(mode.current || 'light');
-	const { screenToFlowPosition } = useSvelteFlow();
+	const { screenToFlowPosition, getViewport } = useSvelteFlow();
+
+	let viewport = $derived(getViewport());
 
 	const onbeforedelete: OnBeforeDelete = async ({ nodes: deletedNodes, edges: _edges }) => {
 		let remainingNodes = [...diagramStore.nodes];
@@ -100,5 +103,12 @@
 >
 	<Background variant={BackgroundVariant.Dots} />
 	<Controls />
+	<Panel position="top-left">
+		<div class="flex flex-row gap-2 text-xs text-muted-foreground">
+			<span>X: {Math.round(viewport.x * 100) / 100}</span>
+			<span>Y: {Math.round(viewport.y * 100) / 100}</span>
+			<span>Zoom: {Math.round(viewport.zoom * 100) / 100}</span>
+		</div>
+	</Panel>
 	<MiniMap />
 </SvelteFlow>

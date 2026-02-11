@@ -6,9 +6,13 @@
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as Alert from '$lib/components/ui/alert';
+	import { goto } from '$app/navigation';
+	import { toast } from 'svelte-sonner';
+	import { useSvelteFlow } from '@xyflow/svelte';
 
 	let { node }: { node: Node<SymbolicParentNodeProps, 'number'> } = $props();
 	let labelValue = $state(node.data.label);
+	const { fitView } = useSvelteFlow();
 
 	function updateLabel(e: Event) {
 		if (labelValue.length > 20) return;
@@ -30,9 +34,6 @@
 		diagramStore.markDirty();
 	}
 
-	import { goto } from '$app/navigation';
-	import { toast } from 'svelte-sonner';
-
 	function goToParentNodeDiagram() {
 		const parentId = node.data.parentDiagramId;
 		const projectId = diagramStore.projectId;
@@ -40,6 +41,7 @@
 		if (parentId && projectId) {
 			toast.success('Parent diagram opened');
 			goto(`/projects/${projectId}/diagrams/${parentId}`);
+			setTimeout(() => fitView({ padding: 0.1 }), 500);
 		} else {
 			toast.error('Parent diagram information missing');
 		}

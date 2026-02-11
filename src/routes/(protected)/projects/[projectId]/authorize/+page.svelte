@@ -97,7 +97,7 @@
 	});
 </script>
 
-<div class="relative flex min-h-screen w-full items-center justify-center bg-muted/40 p-4">
+<div class="relative flex min-h-screen w-full items-center justify-center bg-background p-4">
 	<header class="absolute top-0 right-0 left-0 flex items-center justify-between p-6">
 		<Button variant="ghost" onclick={() => goto('/projects')}>Back to Projects</Button>
 	</header>
@@ -144,7 +144,12 @@
 						</div>
 					</div>
 
-					<Button type="submit" class="w-full" disabled={authLoading || loading || !project}>
+					<Button
+						type="submit"
+						variant="destructive"
+						class="w-full"
+						disabled={authLoading || loading || !project}
+					>
 						{#if authLoading}
 							<Loader2 class="mr-2 h-4 w-4 animate-spin" />
 							Unlocking...

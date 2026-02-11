@@ -2,6 +2,7 @@
 	import { Marked } from 'marked';
 	import { markedHighlight } from 'marked-highlight';
 	import hljs from 'highlight.js';
+	import { ScrollArea } from '$lib/components/ui/scroll-area';
 
 	let { value = $bindable() } = $props();
 
@@ -18,9 +19,11 @@
 </script>
 
 <div class="relative h-full">
-	<div class="absolute inset-0 max-h-full overflow-auto">
-		<div class="mx-auto prose prose-sm max-w-[100ch] min-w-[65ch] px-8 py-4 dark:prose-invert">
-			{@html marked.parse(value || '')}
-		</div>
+	<div class="absolute inset-0 w-full">
+		<ScrollArea class="h-full w-full" orientation="both">
+			<div class="mx-auto prose prose-sm max-w-[100ch] min-w-[65ch] px-8 py-4 dark:prose-invert">
+				{@html marked.parse(value || '')}
+			</div>
+		</ScrollArea>
 	</div>
 </div>

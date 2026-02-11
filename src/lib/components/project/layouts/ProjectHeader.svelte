@@ -33,7 +33,11 @@
 
 		if (!projectId) return;
 
-		if (params.nodeId) {
+		// Prioritize specific pages that might overlap with generic params
+		if (page.url.pathname.endsWith('/vault') && params.nodeId) {
+			type = 'node_vault';
+			id = params.nodeId;
+		} else if (params.nodeId) {
 			type = 'node';
 			id = params.nodeId;
 		} else if (params.diagramId) {
@@ -41,9 +45,6 @@
 			id = params.diagramId;
 		} else if (page.url.pathname.endsWith('/notes')) {
 			type = 'note';
-			id = ''; // List type
-		} else if (page.url.pathname.endsWith('/vault')) {
-			type = 'vault';
 			id = ''; // List type
 		} else {
 			type = 'project';
@@ -82,6 +83,7 @@
 			case 'note':
 				return FileTextIcon;
 			case 'vault':
+			case 'node_vault':
 				return ArchiveIcon;
 			default:
 				return FolderLockIcon;
@@ -99,7 +101,8 @@
 			case 'note':
 				return `/projects/${projectId}/notes`; // TODO: Handle specific note
 			case 'vault':
-				return `/projects/${projectId}/vault`;
+			case 'node_vault':
+				return `/projects/${projectId}/diagrams/${page.params.diagramId}/node/${page.params.nodeId}/vault`;
 			default:
 				return '#';
 		}
@@ -171,7 +174,7 @@
 		</div>
 
 		<div>
-			<Button onclick={handleLockProject}><LockIcon /> Lock Project</Button>
+			<Button variant="destructive" onclick={handleLockProject}><LockIcon /> Lock Project</Button>
 			<ModeToggler />
 		</div>
 	</div>

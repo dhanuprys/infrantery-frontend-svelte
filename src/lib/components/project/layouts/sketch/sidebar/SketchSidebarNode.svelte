@@ -8,6 +8,8 @@
 	import SymbolicParentNodeSetting from './nodes/SymbolicParentNodeSetting.svelte';
 	import CommentNodeSetting from './nodes/CommentNodeSetting.svelte';
 	import { type CommentNodeProps } from '$lib/components/project/digrams/nodes/CommentNode.svelte';
+	import AreaNodeSetting from './nodes/AreaNodeSetting.svelte';
+	import { type AreaNodeProps } from '$lib/components/project/digrams/nodes/AreaNode.svelte';
 
 	let { node }: { node: NodeWithType } = $props();
 
@@ -25,6 +27,8 @@
 			<ImageNodeSetting node={currentNode as Node<ImageNodeProps, 'number'>} />
 		{:else if currentNode?.type === NodeTypeKey.SYMBOLIC_PARENT}
 			<SymbolicParentNodeSetting node={currentNode as Node<SymbolicParentNodeProps, 'number'>} />
+		{:else if currentNode?.type === NodeTypeKey.AREA}
+			<AreaNodeSetting node={currentNode as Node<AreaNodeProps, 'number'>} />
 		{:else if currentNode?.type === NodeTypeKey.COMMENT}
 			<CommentNodeSetting node={currentNode as Node<CommentNodeProps, 'number'>} />
 		{/if}
