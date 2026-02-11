@@ -5,7 +5,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import Separator from '$lib/components/ui/separator/separator.svelte';
-	import secureProjectSession from '$lib/services/secureProjectSession';
+	import secureKeyringSession from '$lib/services/secureKeyringSession';
 	import { breadcrumbService } from '$lib/services/breadcrumb.service';
 	import type { BreadcrumbItem } from '$lib/types/breadcrumb';
 	import { page } from '$app/state';
@@ -67,7 +67,7 @@
 	});
 
 	function handleLockProject() {
-		secureProjectSession.lockProjects().then(() => {
+		secureKeyringSession.lockProjects().then(() => {
 			toast.success('Project locked successfully');
 			goto(`/projects/${page.params.projectId}/authorize`, { replaceState: true });
 		});

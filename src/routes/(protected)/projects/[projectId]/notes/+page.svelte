@@ -63,28 +63,18 @@
 			const fullNote = res.data;
 
 			if (fullNote.encrypted_content) {
-				if (!projectSessionStore.keys) {
-					throw new Error('Project keys not found. Please re-authorize.');
+				if (!projectSessionStore.keyrings || !projectSessionStore.projectBrief) {
+					throw new Error('Project brief not found. Please re-authorize.');
 				}
 
 				// 2. Verify Signature
-				const isValid = await cryptoService.verifySignature(
-					projectSessionStore.keys.signingPublicKey,
+				const unwrapped = await cryptoService.unwrapProjectData(
+					projectSessionStore.keyrings,
 					fullNote.encrypted_content_signature,
 					fullNote.encrypted_content
 				);
 
-				if (!isValid) {
-					throw new Error('Note signature verification failed! Data may be tampered.');
-				}
-
-				// 3. Decrypt Content
-				const decrypted = await cryptoService.decryptWithPrivateKey(
-					projectSessionStore.keys.encryptionPrivateKey,
-					fullNote.encrypted_content
-				);
-
-				mdValue = decrypted;
+				mdValue = unwrapped.decryptedData;
 			} else {
 				mdValue = '';
 			}
@@ -122,21 +112,15 @@
 	}
 
 	async function handleCreateNote(name: string, icon: string) {
-		try {
-			if (!projectSessionStore.keys) {
-				throw new Error('Project keys not found. Please re-authorize.');
-			}
+		if (!projectSessionStore.keyrings || !projectSessionStore.projectBrief) return;
 
+		try {
 			// Encrypt empty string for initial content
 			const initialContent = '# ' + name;
-			const encrypted = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const wrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
 				initialContent
-			);
-
-			const signature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				encrypted
 			);
 
 			const res = await noteService.createNote(projectId, {
@@ -144,8 +128,8 @@
 				type: 'note',
 				parent_id: targetParentId,
 				icon: icon,
-				encrypted_content: encrypted,
-				encrypted_content_signature: signature
+				encrypted_content: wrapped.encrypted,
+				encrypted_content_signature: wrapped.signature
 			});
 
 			notes = [...notes, res.data];
@@ -235,7 +219,7 @@
 	}
 
 	async function saveCurrentNote() {
-		if (!currentNote || !projectSessionStore.keys) return;
+		if (!currentNote || !projectSessionStore.keyrings || !projectSessionStore.projectBrief) return;
 
 		// Only save if status is 'unsaved' (avoid double saves or saving on error retry without change?)
 		// actually, retry on error is valid.
@@ -243,21 +227,16 @@
 
 		try {
 			// 1. Encrypt
-			const encrypted = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys!.encryptionPublicKey,
+			const wrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
 				mdValue
-			);
-
-			// 2. Sign
-			const signature = await cryptoService.signData(
-				projectSessionStore.keys!.signingPrivateKey,
-				encrypted
 			);
 
 			// 3. Update
 			await noteService.updateNote(projectId, currentNote.id, {
-				encrypted_content: encrypted,
-				encrypted_content_signature: signature
+				encrypted_content: wrapped.encrypted,
+				encrypted_content_signature: wrapped.signature
 			});
 
 			lastSaved = new Date();

@@ -27,7 +27,7 @@
 	$effect(() => {
 		// Explicitly track dependencies
 		const currentNode = node;
-		const keys = projectSessionStore.keys;
+		const keys = projectSessionStore.keyrings;
 
 		// Run decryption without tracking internal reads
 		untrack(() => {
@@ -38,26 +38,32 @@
 		});
 	});
 
-	async function decryptData(currentNode: typeof node, keys: typeof projectSessionStore.keys) {
-		if (!keys) return;
+	async function decryptData(currentNode: typeof node, keys: typeof projectSessionStore.keyrings) {
+		if (!keys || !projectSessionStore.projectBrief) return;
 
 		try {
 			// Decrypt Readme
 			if (currentNode.encrypted_readme) {
-				readme = await cryptoService.decryptWithPrivateKey(
-					keys.encryptionPrivateKey,
-					currentNode.encrypted_readme
-				);
+				readme = (
+					await cryptoService.unwrapProjectData(
+						keys,
+						currentNode.encrypted_readme_signature!,
+						currentNode.encrypted_readme
+					)
+				).decryptedData;
 			} else {
 				readme = '';
 			}
 
 			// Decrypt Dictionary
 			if (currentNode.encrypted_dict) {
-				const dictJson = await cryptoService.decryptWithPrivateKey(
-					keys.encryptionPrivateKey,
-					currentNode.encrypted_dict
-				);
+				const dictJson = (
+					await cryptoService.unwrapProjectData(
+						keys,
+						currentNode.encrypted_dict_signature!,
+						currentNode.encrypted_dict
+					)
+				).decryptedData;
 				try {
 					const parsed = JSON.parse(dictJson);
 					dict = Object.entries(parsed).map(([key, value]) => ({ key, value: String(value) }));
@@ -83,7 +89,7 @@
 	}
 
 	async function handleSave() {
-		if (!projectSessionStore.keys) {
+		if (!projectSessionStore.keyrings || !projectSessionStore.projectBrief) {
 			toast.error('Project keys missing');
 			return;
 		}
@@ -91,13 +97,10 @@
 		isSaving = true;
 		try {
 			// Encrypt Readme
-			const encryptedReadme = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const readmeWrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
 				readme
-			);
-			const readmeSignature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				encryptedReadme
 			);
 
 			// Encrypt Dictionary
@@ -109,13 +112,10 @@
 				{} as Record<string, string>
 			);
 			const dictJson = JSON.stringify(dictObj);
-			const encryptedDict = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const dictWrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
 				dictJson
-			);
-			const dictSignature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				encryptedDict
 			);
 
 			const updatedNode = await nodeService.updateNode(
@@ -123,10 +123,10 @@
 				$page.params.diagramId!,
 				node.id,
 				{
-					encrypted_readme: encryptedReadme,
-					encrypted_readme_signature: readmeSignature,
-					encrypted_dict: encryptedDict,
-					encrypted_dict_signature: dictSignature
+					encrypted_readme: readmeWrapped.encrypted,
+					encrypted_readme_signature: readmeWrapped.signature,
+					encrypted_dict: dictWrapped.encrypted,
+					encrypted_dict_signature: dictWrapped.signature
 				}
 			);
 

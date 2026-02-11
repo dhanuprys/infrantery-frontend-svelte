@@ -1,54 +1,58 @@
 <script lang="ts">
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ProjectSessionKeys } from '$lib/data/project-session-keys';
-	import secureProjectSession from '$lib/services/secureProjectSession';
+	import secureKeyringSession from '$lib/services/secureKeyringSession';
 	import { onMount } from 'svelte';
 	import type { LayoutProps } from './$types';
-	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
 
 	import { Loader2 } from '@lucide/svelte';
+	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
+	import { projectService } from '$lib/services/project.service';
+	import { toast } from 'svelte-sonner';
 
 	let { children, params }: LayoutProps = $props();
 	let readyToShow = $state(false);
 
 	async function checkProjectSession() {
-		secureProjectSession.cleanUpOtherOpenedProjects(params.projectId);
+		secureKeyringSession.cleanUpOtherOpenedProjects(params.projectId);
+		const isOnAuthorizePage = window.location.href.endsWith('/authorize');
+		const epoch = await secureKeyringSession.getEpoch(params.projectId);
 
-		const projectEncryptionPublicKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.ENCRYPTION_PUBLIC_KEY,
-			params.projectId
-		);
-		const projectEncryptionPrivateKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.ENCRYPTION_PRIVATE_KEY,
-			params.projectId
-		);
-		const projectSigningPublicKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.SIGNING_PUBLIC_KEY,
-			params.projectId
-		);
-		const projectSigningPrivateKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.SIGNING_PRIVATE_KEY,
-			params.projectId
-		);
-
-		if (
-			(!projectEncryptionPublicKey ||
-				!projectEncryptionPrivateKey ||
-				!projectSigningPublicKey ||
-				!projectSigningPrivateKey) &&
-			!window.location.href.endsWith('/authorize')
-		) {
+		if (!epoch && !isOnAuthorizePage) {
 			return goto(`/projects/${params.projectId}/authorize`, { replaceState: true });
 		}
 
-		projectSessionStore.setKeys({
-			encryptionPublicKey: projectEncryptionPublicKey!,
-			encryptionPrivateKey: projectEncryptionPrivateKey!,
-			signingPublicKey: projectSigningPublicKey!,
-			signingPrivateKey: projectSigningPrivateKey!
-		});
+		const keyrings = await secureKeyringSession.getItems(params.projectId);
 
-		readyToShow = true;
+		if (!keyrings && !isOnAuthorizePage) {
+			return goto(`/projects/${params.projectId}/authorize`, { replaceState: true });
+		}
+
+		if (isOnAuthorizePage) {
+			readyToShow = true;
+			return;
+		}
+
+		if (keyrings) {
+			try {
+				const project = await projectService.getProjectChunk(params.projectId);
+
+				if (project.data.key_epoch !== epoch) {
+					toast.info('Project epoch has changed. Please reauthorize');
+					secureKeyringSession.lockProjects();
+					return goto(`/projects/${params.projectId}/authorize`, { replaceState: true });
+				}
+
+				projectSessionStore.setProjectBrief(project.data);
+				projectSessionStore.setKeyrings(keyrings);
+
+				readyToShow = true;
+			} catch (error) {
+				toast.error('Failed to load project');
+				return goto('/projects', { replaceState: true });
+			}
+		} else {
+			readyToShow = true;
+		}
 	}
 
 	onMount(async () => await checkProjectSession());

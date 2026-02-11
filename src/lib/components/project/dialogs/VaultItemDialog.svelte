@@ -2,12 +2,13 @@
 	import * as Dialog from '$lib/components/ui/dialog';
 	import VaultForm from '$lib/components/project/vault/VaultForm.svelte';
 	import { vaultService } from '$lib/services/vault.service';
-	import secureProjectSession from '$lib/services/secureProjectSession';
+	import secureKeyringSession from '$lib/services/secureKeyringSession';
 	import { ProjectSessionKeys } from '$lib/data/project-session-keys';
 	import { cryptoService } from '$lib/services/cryptoService';
 	import { toast } from 'svelte-sonner';
 	import type { NodeVaultResponse } from '$lib/services/vault.service';
 	import { page } from '$app/stores';
+	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
 
 	let {
 		open = $bindable(false),
@@ -29,28 +30,14 @@
 	let projectId = $derived($page.params.projectId as string);
 	let diagramId = $derived($page.params.diagramId as string);
 
-	async function getKeys() {
-		const encryptKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.ENCRYPTION_PUBLIC_KEY,
-			projectId
-		);
-		const signKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.SIGNING_PRIVATE_KEY,
-			projectId
-		);
-
-		if (!encryptKey || !signKey) {
-			throw new Error('Project keys not found in session');
-		}
-		return { encryptKey, signKey };
-	}
-
 	async function handleSave(data: Record<string, any>) {
+		if (!projectSessionStore.keyrings || !projectSessionStore.projectBrief) {
+			toast.error('Project keys missing');
+			return;
+		}
+
 		loading = true;
 		try {
-			// Get keys for encryption/signing
-			const { encryptKey, signKey } = await getKeys();
-
 			// 0. Extract Label (should not be encrypted)
 			const { label, ...dataToEncrypt } = data;
 
@@ -63,23 +50,26 @@
 			const jsonString = JSON.stringify(dataToEncrypt);
 
 			// 2. Encrypt & Sign
-			const encrypted = await cryptoService.encryptWithPublicKey(encryptKey, jsonString);
-			const signature = await cryptoService.signData(signKey, encrypted);
+			const wrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
+				jsonString
+			);
 
 			if (mode === 'create') {
 				await vaultService.createVaultItem(projectId, diagramId, nodeId, {
 					label,
 					type: typeKey,
-					encrypted_value: encrypted,
-					encrypted_value_signature: signature
+					encrypted_value: wrapped.encrypted,
+					encrypted_value_signature: wrapped.signature
 				});
 				toast.success('Vault item added successfully');
 			} else {
 				if (!existingItem?.id) throw new Error('Item ID missing for update');
 				await vaultService.updateVaultItem(projectId, diagramId, nodeId, existingItem.id, {
 					label,
-					encrypted_value: encrypted,
-					encrypted_value_signature: signature
+					encrypted_value: wrapped.encrypted,
+					encrypted_value_signature: wrapped.signature
 				});
 				toast.success('Vault item updated successfully');
 			}

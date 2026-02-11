@@ -7,7 +7,7 @@
 	import { ProjectSessionKeys } from '$lib/data/project-session-keys';
 	import { cryptoService } from '$lib/services/cryptoService';
 	import { projectService } from '$lib/services/project.service';
-	import secureProjectSession from '$lib/services/secureProjectSession';
+	import secureKeyringSession, { type Keyring } from '$lib/services/secureKeyringSession';
 	import type { ProjectDetailResponse } from '$lib/types/api';
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -40,44 +40,56 @@
 
 	async function handleAuthorize(e: Event) {
 		e.preventDefault();
+
 		if (!project) return;
 
 		authLoading = true;
 		error = null;
 
 		try {
+			if (!project.keyrings || project.keyrings.length === 0) {
+				error = 'No keyrings found for project';
+				return;
+			}
+
+			const currentProjectKeyring = project.keyrings.find(
+				(keyring) => keyring.epoch === project?.key_epoch
+			);
+
+			if (!currentProjectKeyring) {
+				error = 'No keyring found for project';
+				return;
+			}
+
 			// 1. Decrypt Private Keys with Master Password
-			const encPrivateKey = await cryptoService.decryptWithPassphrase(
+			const userPrivateKey = await cryptoService.decryptWithPassphrase(
 				password,
-				cryptoService.parseEncryptedData(project.secret_encrypted_private_key)
+				cryptoService.parseEncryptedData(project.user_encrypted_private_key)
 			);
 
-			const signPrivateKey = await cryptoService.decryptWithPassphrase(
-				password,
-				cryptoService.parseEncryptedData(project.secret_signing_private_key)
-			);
+			const translatedKeyrings: Keyring[] = [];
 
+			for (const keyring of project.keyrings) {
+				// decrypt passphrase
+				const passphrase = await cryptoService.decryptWithPrivateKey(
+					userPrivateKey,
+					keyring.secret_passphrase
+				);
+				const signingPrivateKey = await cryptoService.decryptWithPrivateKey(
+					userPrivateKey,
+					keyring.secret_signing_private_key
+				);
+
+				translatedKeyrings.push({
+					epoch: keyring.epoch,
+					passphrase,
+					signing_public_key: keyring.signing_public_key,
+					signing_private_key: signingPrivateKey
+				});
+			}
 			// 2. Store Keys in Secure Session
-			await secureProjectSession.setItem(
-				ProjectSessionKeys.ENCRYPTION_PRIVATE_KEY,
-				projectId,
-				encPrivateKey
-			);
-			await secureProjectSession.setItem(
-				ProjectSessionKeys.ENCRYPTION_PUBLIC_KEY,
-				projectId,
-				project.encryption_public_key
-			);
-			await secureProjectSession.setItem(
-				ProjectSessionKeys.SIGNING_PRIVATE_KEY,
-				projectId,
-				signPrivateKey
-			);
-			await secureProjectSession.setItem(
-				ProjectSessionKeys.SIGNING_PUBLIC_KEY,
-				projectId,
-				project.signing_public_key
-			);
+			await secureKeyringSession.setEpoch(projectId, project.key_epoch);
+			await secureKeyringSession.setItem(projectId, translatedKeyrings);
 
 			toast.success('Project authorized successfully');
 			goto(`/projects/${projectId}`);

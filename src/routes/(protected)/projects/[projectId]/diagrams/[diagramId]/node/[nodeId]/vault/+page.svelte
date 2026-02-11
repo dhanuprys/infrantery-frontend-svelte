@@ -22,9 +22,10 @@
 	import { vaultTypes } from '$lib/data/vault-type';
 	import { toast } from 'svelte-sonner';
 	import VaultItemDialog from '$lib/components/project/dialogs/VaultItemDialog.svelte';
-	import secureProjectSession from '$lib/services/secureProjectSession';
+	import secureKeyringSession from '$lib/services/secureKeyringSession.js';
 	import { ProjectSessionKeys } from '$lib/data/project-session-keys';
 	import { cryptoService } from '$lib/services/cryptoService';
+	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte.js';
 
 	let { data } = $props();
 	let projectId = $derived($page.params.projectId as string);
@@ -69,24 +70,11 @@
 		dialogOpen = true;
 	}
 
-	async function getKeys() {
-		const encryptKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.ENCRYPTION_PRIVATE_KEY,
-			projectId
-		);
-		const signKey = await secureProjectSession.getItem(
-			ProjectSessionKeys.SIGNING_PUBLIC_KEY,
-			projectId
-		);
-
-		if (!encryptKey || !signKey) {
-			toast.error('Project keys not found. Please re-authorize.');
-			throw new Error('Keys missing');
-		}
-		return { encryptKey, signKey };
-	}
-
 	async function decryptItem(item: NodeVaultResponse) {
+		if (!projectSessionStore.keyrings) {
+			toast.error('Project keys missing');
+			return;
+		}
 		// Lazy Load: Fetch full details if encrypted_value is missing
 		let fullItem = item;
 		if (!item.encrypted_value || !item.encrypted_value_signature) {
@@ -106,26 +94,13 @@
 		}
 
 		try {
-			const { encryptKey, signKey } = await getKeys();
-
 			// 1. Verify Signature
-			const isValid = await cryptoService.verifySignature(
-				signKey,
+			const unwrapped = await cryptoService.unwrapProjectData(
+				projectSessionStore.keyrings,
 				fullItem.encrypted_value_signature,
 				fullItem.encrypted_value
 			);
-
-			if (!isValid) {
-				toast.error('Signature verification failed! Data integrity compromised.');
-				return null;
-			}
-
-			// 2. Decrypt
-			const decryptedJson = await cryptoService.decryptWithPrivateKey(
-				encryptKey,
-				fullItem.encrypted_value
-			);
-			return JSON.parse(decryptedJson);
+			return JSON.parse(unwrapped.decryptedData);
 		} catch (err: any) {
 			console.error('Decryption failed:', err);
 			toast.error('Failed to decrypt item.');

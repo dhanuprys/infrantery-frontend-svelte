@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { authService } from '$lib/services/auth.service';
-	import secureProjectSession from '$lib/services/secureProjectSession';
+	import secureKeyringSession from '$lib/services/secureKeyringSession';
 	import { userStore } from '$lib/stores/userStore.svelte';
 	import { onMount } from 'svelte';
 
@@ -14,7 +14,7 @@
 		} catch (error) {
 			console.error('Failed to load profile', error);
 			userStore.clearUser();
-			secureProjectSession.lockProjects();
+			secureKeyringSession.lockProjects();
 			return goto('/login');
 		}
 	});

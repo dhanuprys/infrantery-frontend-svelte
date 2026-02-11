@@ -66,10 +66,11 @@ export interface ChangePasswordRequest {
 export interface CreateProjectRequest {
 	name: string;
 	description: string;
-	secret_encrypted_private_key: string; // encrypted + "." + salt + "." + iv
-	encryption_public_key: string;
+	secret_passphrase: string;
 	secret_signing_private_key: string; // encrypted + "." + salt + "." + iv
 	signing_public_key: string;
+	user_public_key: string;
+	user_encrypted_private_key: string;
 }
 
 export interface UpdateProjectRequest {
@@ -93,22 +94,34 @@ export interface ProjectResponse {
 	id: string;
 	name: string;
 	description: string;
+	key_epoch: string;
 	created_at: string;
 	updated_at: string;
+}
+
+export interface ProjectMemberKeyring {
+	epoch: string;
+	secret_passphrase: string;
+	secret_signing_private_key: string;
+	signing_public_key: string;
 }
 
 export interface ProjectDetailResponse {
 	id: string;
 	name: string;
 	description: string;
-	secret_encrypted_private_key: string;
-	encryption_public_key: string;
-	secret_signing_private_key: string;
-	signing_public_key: string;
+	key_epoch: string;
 	role: string;
 	permissions: string[];
+	user_encrypted_private_key: string;
+	keyrings?: ProjectMemberKeyring[];
 	created_at: string;
 	updated_at: string;
+}
+
+export interface ProjectChunkResponse {
+	id: string;
+	key_epoch: string;
 }
 
 export interface ProjectMemberResponse {

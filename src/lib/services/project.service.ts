@@ -7,7 +7,8 @@ import type {
 	CreateProjectRequest,
 	UpdateProjectRequest,
 	AddMemberRequest,
-	UpdateMemberRequest
+	UpdateMemberRequest,
+	ProjectChunkResponse
 } from '$lib/types/api';
 
 export const projectService = {
@@ -26,6 +27,14 @@ export const projectService = {
 		const query = withSecret ? '?with_secret=true' : '';
 		const response = await apiClient.get<APIResponse<ProjectDetailResponse>>(
 			`/projects/${id}${query}`
+		);
+		return response.data;
+	},
+
+	// a brief information about the project
+	async getProjectChunk(id: string): Promise<APIResponse<ProjectChunkResponse>> {
+		const response = await apiClient.get<APIResponse<ProjectChunkResponse>>(
+			`/projects/${id}?chunk=true`
 		);
 		return response.data;
 	},

@@ -1,3 +1,5 @@
+import type { Keyring } from './secureKeyringSession';
+
 // --- Interfaces for Type Safety ---
 export interface SymmetricEncryptedData {
 	ciphertext: string; // Base64
@@ -271,6 +273,56 @@ export class CryptoService {
 		);
 
 		return new TextDecoder().decode(decryptedBuffer);
+	}
+
+	async wrapProjectData(keyrings: Keyring[], epoch: string, plaintext: string) {
+		const keyring = keyrings.find((k) => k.epoch === epoch);
+		if (!keyring) {
+			throw new Error('Keyring not found for epoch');
+		}
+		const encryptedData = this.formatEncryptedData(
+			await this.encryptWithPassphrase(keyring.passphrase, plaintext)
+		);
+		const signature = await this.signData(keyring.signing_private_key, encryptedData);
+		return {
+			encrypted: encryptedData + ':::' + epoch,
+			signature
+		};
+	}
+
+	async unwrapProjectData(keyrings: Keyring[], signature: string, data: string) {
+		const [encryptedData, epoch] = data.split(':::');
+
+		if (!encryptedData || !epoch) {
+			throw new Error('Invalid project data format');
+		}
+
+		const keyring = keyrings.find((k) => k.epoch === epoch);
+
+		if (!keyring) {
+			throw new Error('Keyring not found!');
+		}
+
+		// check signature
+		const isValid = await this.verifySignature(
+			keyring.signing_public_key,
+			signature,
+			encryptedData
+		);
+
+		if (!isValid) {
+			throw new Error('Note signature verification failed! Data may be tampered.');
+		}
+
+		const decryptedData = await this.decryptWithPassphrase(
+			keyring.passphrase,
+			this.parseEncryptedData(encryptedData)
+		);
+
+		return {
+			decryptedData,
+			epoch
+		};
 	}
 
 	// --- 4. SIGNATURES (Private Key) ---

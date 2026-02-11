@@ -82,7 +82,12 @@
 			return;
 		}
 
-		if (!projectSessionStore.keys || !projectId || !currentDiagramId) {
+		if (
+			!projectSessionStore.keyrings ||
+			!projectSessionStore.projectBrief ||
+			!projectId ||
+			!currentDiagramId
+		) {
 			toast.error('Project keys or ID missing');
 			return;
 		}
@@ -106,21 +111,18 @@
 			};
 			const childJson = JSON.stringify(initialChildData);
 
-			const childEncrypted = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const childWrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief?.key_epoch,
 				childJson
-			);
-			const childSignature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				childEncrypted
 			);
 
 			const res = await diagramService.createDiagram(projectId, {
 				diagram_name: `Child of ${node.data.label || 'Node'}`,
 				description: `Child diagram created from node ${node.id}`,
 				parent_diagram_id: currentDiagramId,
-				encrypted_data: childEncrypted,
-				encrypted_data_signature: childSignature
+				encrypted_data: childWrapped.encrypted,
+				encrypted_data_signature: childWrapped.signature
 			});
 
 			const newChildId = res.data.id;
@@ -148,18 +150,14 @@
 			};
 
 			const parentJson = JSON.stringify(parentData);
-			const parentEncrypted = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const parentWrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief?.key_epoch,
 				parentJson
 			);
-			const parentSignature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				parentEncrypted
-			);
-
 			await diagramService.updateDiagram(projectId, currentDiagramId, {
-				encrypted_data: parentEncrypted,
-				encrypted_data_signature: parentSignature
+				encrypted_data: parentWrapped.encrypted,
+				encrypted_data_signature: parentWrapped.signature
 			});
 
 			// Update local store to match the saved state and mark as clean

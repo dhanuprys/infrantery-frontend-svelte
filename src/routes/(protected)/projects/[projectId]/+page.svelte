@@ -38,7 +38,7 @@
 
 	async function handleCreateDiagram(name: string, description: string) {
 		try {
-			if (!projectSessionStore.keys) {
+			if (!projectSessionStore.keyrings || !projectSessionStore.projectBrief) {
 				throw new Error('Project keys not found. Please re-authorize.');
 			}
 
@@ -46,23 +46,18 @@
 			const defaultData = JSON.stringify({ nodes: [], edges: [] });
 
 			// 2. Encrypt
-			const encrypted = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const wrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
 				defaultData
-			);
-
-			// 3. Sign
-			const signature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				encrypted
 			);
 
 			// 4. Create via Service
 			const res = await diagramService.createDiagram(projectId, {
 				diagram_name: name,
 				description: description,
-				encrypted_data: encrypted,
-				encrypted_data_signature: signature
+				encrypted_data: wrapped.encrypted,
+				encrypted_data_signature: wrapped.signature
 			});
 
 			// 5. Redirect

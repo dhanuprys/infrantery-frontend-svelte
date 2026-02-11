@@ -17,7 +17,6 @@
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 
 	let projects = $state<ProjectResponse[]>([]);
 	let loading = $state(true);

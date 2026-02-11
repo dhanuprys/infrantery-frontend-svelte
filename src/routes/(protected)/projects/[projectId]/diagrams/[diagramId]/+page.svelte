@@ -30,30 +30,19 @@
 			diagramStore.setContext(projectId, diagramId, currentDiagram.parent_diagram_id);
 
 			if (currentDiagram.encrypted_data) {
-				if (!projectSessionStore.keys) {
+				if (!projectSessionStore.keyrings) {
 					throw new Error('Project keys not found. Please re-authorize.');
 				}
 
 				// 1. Verify Signature
-				const isValid = await cryptoService.verifySignature(
-					projectSessionStore.keys.signingPublicKey,
+				const unwrapped = await cryptoService.unwrapProjectData(
+					projectSessionStore.keyrings,
 					currentDiagram.encrypted_data_signature,
 					currentDiagram.encrypted_data
 				);
 
-				if (!isValid) {
-					throw new Error('Diagram signature verification failed! Data may be tampered.');
-				}
-
-				// 2. Decrypt
-				const decrypted = await cryptoService.decryptWithPrivateKey(
-					projectSessionStore.keys.encryptionPrivateKey,
-					currentDiagram.encrypted_data
-				);
-
-				// 3. Parse and Update Store
 				try {
-					const data: DiagramData = JSON.parse(decrypted);
+					const data: DiagramData = JSON.parse(unwrapped.decryptedData);
 					// Validate structure loosely
 					if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
 						console.log({ n: data.nodes });
@@ -86,7 +75,8 @@
 	}
 
 	async function saveDiagram() {
-		if (!currentDiagram || !projectSessionStore.keys) return;
+		if (!currentDiagram || !projectSessionStore.keyrings || !projectSessionStore.projectBrief)
+			return;
 
 		saveStatus = 'saving';
 
@@ -98,21 +88,15 @@
 			const jsonString = JSON.stringify(data);
 
 			// 1. Encrypt
-			const encrypted = await cryptoService.encryptWithPublicKey(
-				projectSessionStore.keys.encryptionPublicKey,
+			const wrapped = await cryptoService.wrapProjectData(
+				projectSessionStore.keyrings,
+				projectSessionStore.projectBrief.key_epoch,
 				jsonString
 			);
-
-			// 2. Sign
-			const signature = await cryptoService.signData(
-				projectSessionStore.keys.signingPrivateKey,
-				encrypted
-			);
-
 			// 3. Update
 			const res = await diagramService.updateDiagram(projectId, diagramId, {
-				encrypted_data: encrypted,
-				encrypted_data_signature: signature
+				encrypted_data: wrapped.encrypted,
+				encrypted_data_signature: wrapped.signature
 			});
 
 			currentDiagram = res.data;

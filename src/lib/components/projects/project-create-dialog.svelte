@@ -7,6 +7,7 @@
 	import { cryptoService } from '$lib/services/cryptoService';
 	import { projectService } from '$lib/services/project.service';
 	import { toast } from '$lib/components/ui/sonner';
+	import { ObjectId } from 'bson';
 
 	let { open = $bindable(false), onSuccess } = $props();
 
@@ -33,31 +34,36 @@
 
 		try {
 			// 1. Generate Keys
-			const encKeys = await cryptoService.generateEncryptionKeys();
+			const userEncKeys = await cryptoService.generateEncryptionKeys();
 			const signKeys = await cryptoService.generateSigningKeys();
-
-			// 2. Encrypt Private Keys with Master Password
-			const encryptedEncKeyData = await cryptoService.encryptWithPassphrase(
-				masterPassword,
-				encKeys.privateKey
+			const actualProjectPassphrase = new ObjectId().toString();
+			const encryptedProjectPassphrase = await cryptoService.encryptWithPublicKey(
+				userEncKeys.publicKey,
+				actualProjectPassphrase
 			);
-			const encryptedSignKeyData = await cryptoService.encryptWithPassphrase(
-				masterPassword,
+			const encryptedSignKey = await cryptoService.encryptWithPublicKey(
+				userEncKeys.publicKey,
 				signKeys.privateKey
 			);
 
+			// 2. Encrypt Private Keys with Master Password
+			const encryptedUserEncKey = await cryptoService.encryptWithPassphrase(
+				masterPassword,
+				userEncKeys.privateKey
+			);
+
 			// 3. Format Encrypted Keys
-			const formattedEncKey = cryptoService.formatEncryptedData(encryptedEncKeyData);
-			const formattedSignKey = cryptoService.formatEncryptedData(encryptedSignKeyData);
+			const formattedEncKey = cryptoService.formatEncryptedData(encryptedUserEncKey);
 
 			// 4. Create Project
 			await projectService.createProject({
 				name,
 				description,
-				encryption_public_key: encKeys.publicKey,
+				secret_passphrase: encryptedProjectPassphrase,
 				signing_public_key: signKeys.publicKey,
-				secret_encrypted_private_key: formattedEncKey,
-				secret_signing_private_key: formattedSignKey
+				secret_signing_private_key: encryptedSignKey,
+				user_public_key: userEncKeys.publicKey,
+				user_encrypted_private_key: formattedEncKey
 			});
 
 			toast.success('Project created successfully');

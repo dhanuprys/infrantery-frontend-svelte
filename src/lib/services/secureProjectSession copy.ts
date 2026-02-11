@@ -1,7 +1,6 @@
-import { type ProjectSessionKeyType } from '$lib/data/project-session-keys';
 import { cryptoService } from './cryptoService';
 
-class SecureProjectSession {
+class secureKeyringSession {
 	private secretKey: string;
 	private secretSalt: Uint8Array<ArrayBuffer>;
 	private secretIv: Uint8Array<ArrayBuffer>;
@@ -36,11 +35,11 @@ class SecureProjectSession {
 		}
 	}
 
-	public async setItem(key: ProjectSessionKeyType, projectId: string, value: string) {
+	public async setItem(epoch: string, projectId: string, value: string) {
 		try {
 			const encryptedValue = await cryptoService.encryptWithPassphrase(this.secretKey, value);
 			sessionStorage.setItem(
-				await this.generateKey(key, projectId),
+				await this.generateKey(epoch, projectId),
 				btoa(JSON.stringify(encryptedValue))
 			);
 		} catch (error) {
@@ -48,9 +47,9 @@ class SecureProjectSession {
 		}
 	}
 
-	public async getItem(key: ProjectSessionKeyType, projectId: string) {
+	public async getItem(epoch: string, projectId: string) {
 		try {
-			const encryptedValue = sessionStorage.getItem(await this.generateKey(key, projectId));
+			const encryptedValue = sessionStorage.getItem(await this.generateKey(epoch, projectId));
 			if (!encryptedValue) {
 				return null;
 			}
@@ -63,9 +62,9 @@ class SecureProjectSession {
 		}
 	}
 
-	public async removeItem(key: ProjectSessionKeyType, projectId: string) {
+	public async removeItem(epoch: string, projectId: string) {
 		try {
-			sessionStorage.removeItem(await this.generateKey(key, projectId));
+			sessionStorage.removeItem(await this.generateKey(epoch, projectId));
 		} catch (error) {
 			return;
 		}
@@ -79,13 +78,13 @@ class SecureProjectSession {
 		}
 	}
 
-	private async generateKey(key: ProjectSessionKeyType, projectId: string): Promise<string> {
+	private async generateKey(epoch: string, projectId: string): Promise<string> {
 		return (
 			`inf_project_${projectId}_` +
 			(
 				await cryptoService.encryptWithPassphrase(
 					this.secretKey,
-					`${key}:${projectId}`,
+					`${epoch}:${projectId}`,
 					this.secretSalt,
 					this.secretIv
 				)
@@ -94,4 +93,4 @@ class SecureProjectSession {
 	}
 }
 
-export default new SecureProjectSession();
+export default new secureKeyringSession();
