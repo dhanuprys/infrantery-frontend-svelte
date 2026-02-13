@@ -13,7 +13,8 @@
 		ShieldCheck,
 		Clock,
 		ChevronRight,
-		ArrowLeft
+		ArrowLeft,
+		Users
 	} from '@lucide/svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Badge } from '$lib/components/ui/badge';
@@ -143,6 +144,10 @@
 				{/if}
 			</div>
 			<div class="flex items-center space-x-2">
+				<Button variant="outline" href={`/projects/${projectId}/members`}>
+					<Users class="mr-2 h-4 w-4" />
+					Members
+				</Button>
 				<Button variant="outline" href={`/projects/${projectId}/notes`}>
 					<FileText class="mr-2 h-4 w-4" />
 					Go to Notes

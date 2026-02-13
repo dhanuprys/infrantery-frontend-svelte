@@ -5,6 +5,7 @@
 	}
 	const navigations: NavigationItem[] = [
 		{ label: 'Projects', href: '/projects' },
+		{ label: 'Join Project', href: '/join' },
 		{ label: 'Account & Settings', href: '/settings' }
 	];
 </script>

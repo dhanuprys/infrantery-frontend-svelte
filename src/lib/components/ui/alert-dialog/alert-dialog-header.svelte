@@ -12,8 +12,8 @@
 
 <div
 	bind:this={ref}
-	data-slot="alert-title"
-	class={cn("col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight", className)}
+	data-slot="alert-dialog-header"
+	class={cn("flex flex-col gap-2 text-center sm:text-start", className)}
 	{...restProps}
 >
 	{@render children?.()}

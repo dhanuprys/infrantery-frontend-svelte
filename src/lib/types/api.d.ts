@@ -130,6 +130,8 @@ export interface ProjectMemberResponse {
 	user_email: string;
 	role: string;
 	permissions: string[];
+	public_key: string;
+	keyrings: ProjectMemberKeyring[];
 	created_at: string;
 	updated_at: string;
 }
@@ -214,4 +216,43 @@ export interface BreadcrumbItem {
 export interface BreadcrumbResponse {
 	project_id: string;
 	path: BreadcrumbItem[];
+}
+
+// Invitation Types
+export interface InvitationResponse {
+	id: string;
+	project_id: string;
+	project_name: string;
+	inviter_name: string;
+	invitee_name?: string;
+	role: string;
+	permissions: string[];
+	encrypted_keyrings: string;
+	status: string;
+	created_at: string;
+}
+
+export interface CreateInvitationRequest {
+	role: string;
+	permissions: string[];
+	encrypted_keyrings: string;
+	invitee_user_id?: string;
+}
+
+export interface AcceptInvitationRequest {
+	keyrings: {
+		epoch: string;
+		secret_passphrase: string;
+		secret_signing_private_key: string;
+		signing_public_key: string;
+	}[];
+	public_key: string;
+	encrypted_private_key: string;
+}
+
+export interface UserSearchResponse {
+	id: string;
+	name: string;
+	email: string;
+	username: string;
 }
