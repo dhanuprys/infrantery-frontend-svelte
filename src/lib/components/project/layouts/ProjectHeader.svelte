@@ -21,6 +21,7 @@
 		ArchiveIcon
 	} from '@lucide/svelte';
 	import { toast } from 'svelte-sonner';
+	import UserDropdown from '$lib/components/user-dropdown.svelte';
 
 	let { appType }: { appType?: 'diagram' | 'note' | 'vault' } = $props();
 	let breadcrumbs = $state<BreadcrumbItem[]>([]);
@@ -191,7 +192,8 @@
 			</Breadcrumb.Root>
 		</div>
 
-		<div>
+		<div class="flex items-center gap-2">
+			<UserDropdown />
 			<Button variant="destructive" onclick={handleLockProject}><LockIcon /> Lock Project</Button>
 			<ModeToggler />
 		</div>
