@@ -5,6 +5,7 @@
 	import { ChevronsUpDown, LogOutIcon, SettingsIcon } from '@lucide/svelte';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import Button from '$lib/components/ui/button/button.svelte';
+	import * as Avatar from '$lib/components/ui/avatar';
 
 	async function handleLogout() {
 		try {
@@ -23,9 +24,18 @@
 {#if userStore.user}
 	<DropdownMenu.Root>
 		<DropdownMenu.Trigger>
-			<Button variant="ghost" class="relative ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-				<span class="font-medium mr-2">{userStore.user.name}</span>
-                <ChevronsUpDown class="-ml-1 h-4 w-4" />
+			<Button
+				variant="ghost"
+				class="relative ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+			>
+				<Avatar.Root class="size-7">
+					<Avatar.Image
+						src={`https://api.dicebear.com/7.x/initials/svg?seed=${userStore.user.name}`}
+					/>
+					<Avatar.Fallback>{userStore.user.name.charAt(0)}</Avatar.Fallback>
+				</Avatar.Root>
+				<span class="mr-2 font-medium">{userStore.user.name}</span>
+				<ChevronsUpDown class="-ml-1 h-4 w-4" />
 				<span class="sr-only">Open user menu</span>
 			</Button>
 		</DropdownMenu.Trigger>
@@ -41,7 +51,10 @@
 				<SettingsIcon class="mr-2 h-4 w-4" />
 				Settings
 			</DropdownMenu.Item>
-			<DropdownMenu.Item onclick={handleLogout} class="text-destructive focus:text-destructive cursor-pointer">
+			<DropdownMenu.Item
+				onclick={handleLogout}
+				class="cursor-pointer text-destructive focus:text-destructive"
+			>
 				<LogOutIcon class="mr-2 h-4 w-4" />
 				<span>Log out</span>
 			</DropdownMenu.Item>

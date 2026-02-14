@@ -161,6 +161,6 @@
 	}
 
 	.cm-gutters {
-		@apply border-r! border-r-foreground/10! bg-background!;
+		@apply pr-2 bg-background!;
 	}
 }
