@@ -21,7 +21,9 @@
 <div class="relative h-full">
 	<div class="absolute inset-0 w-full">
 		<ScrollArea class="h-full w-full" orientation="both">
-			<div class="mx-auto prose prose-sm max-w-[100ch] min-w-[65ch] px-8 py-4 dark:prose-invert">
+			<div
+				class="mx-auto prose prose-sm max-w-[100ch] min-w-[65ch] px-8 py-4 dark:prose-invert [&>p]:wrap-break-word"
+			>
 				{@html marked.parse(value || '')}
 			</div>
 		</ScrollArea>

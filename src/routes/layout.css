@@ -147,6 +147,7 @@
 		@apply px-8;
 	}
 
+	/** Code mirror */
 	.codemirror-wrapper,
 	.cm-editor {
 		@apply min-h-full!;
@@ -161,6 +162,15 @@
 	}
 
 	.cm-gutters {
-		@apply pr-2 bg-background!;
+		@apply pr-2 bg-background! border-none!;
+	}
+
+	.cm-line {
+		@apply pr-4!;
+	}
+
+	.cm-focused {
+		outline: 0 !important;
+		box-shadow: none !important;
 	}
 }

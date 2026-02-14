@@ -1,9 +1,10 @@
 <script lang="ts">
 	import CodeMirror from 'svelte-codemirror-editor';
 	import { markdown } from '@codemirror/lang-markdown';
-	import { oneDark } from '@codemirror/theme-one-dark';
 	import { mode } from 'mode-watcher';
 	import ScrollArea from '$lib/components/ui/scroll-area/scroll-area.svelte';
+	import { githubDark } from '@fsegurai/codemirror-theme-bundle';
+	import { githubLight } from '@fsegurai/codemirror-theme-bundle';
 
 	let { value = $bindable(), onchange } = $props();
 	let colorMode = $derived(mode.current || 'light');
@@ -15,7 +16,7 @@
 			<CodeMirror
 				bind:value
 				lang={markdown()}
-				theme={colorMode === 'dark' ? oneDark : undefined}
+				theme={colorMode === 'dark' ? githubDark : githubLight}
 				{onchange}
 			/>
 		</ScrollArea>
