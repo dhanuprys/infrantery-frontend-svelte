@@ -45,7 +45,6 @@
 					const data: DiagramData = JSON.parse(unwrapped.decryptedData);
 					// Validate structure loosely
 					if (Array.isArray(data.nodes) && Array.isArray(data.edges)) {
-						console.log({ n: data.nodes });
 						diagramStore.setNodes(data.nodes);
 						diagramStore.setEdges(data.edges);
 					} else {

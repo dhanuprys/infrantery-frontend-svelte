@@ -19,6 +19,9 @@
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import { nodeTypes } from '$lib/data/node-types';
 	import { afterNavigate, beforeNavigate } from '$app/navigation';
+	import { untrack } from 'svelte';
+
+	let diagramContainer: HTMLElement;
 
 	let colorMode = $derived(mode.current || 'light');
 	const { screenToFlowPosition, getViewport } = useSvelteFlow();
@@ -27,6 +30,12 @@
 
 	beforeNavigate(() => {
 		diagramStore.setActiveObject(null);
+	});
+
+	$effect(() => {
+		if (diagramContainer) {
+			untrack(() => diagramStore.setContainer(diagramContainer));
+		}
 	});
 
 	const onbeforedelete: OnBeforeDelete = async ({ nodes: deletedNodes, edges: _edges }) => {
@@ -92,28 +101,40 @@
 
 <svelte:body onkeyup={handleKeyUp} />
 
-<SvelteFlow
-	bind:nodes={diagramStore.nodes}
-	bind:edges={diagramStore.edges}
-	fitView
-	{colorMode}
-	snapGrid={[10, 10]}
-	onpaneclick={handlePaneClick}
-	onnodeclick={handleNodeClick}
-	onedgeclick={handleEdgeClick}
-	{onbeforedelete}
-	{nodeTypes}
-	onnodedragstop={() => diagramStore.markDirty()}
-	onconnect={() => diagramStore.markDirty()}
->
-	<Background variant={BackgroundVariant.Dots} />
-	<Controls />
-	<Panel position="top-left">
-		<div class="flex flex-row gap-2 text-xs text-muted-foreground">
-			<span>X: {Math.round(viewport.x * 100) / 100}</span>
-			<span>Y: {Math.round(viewport.y * 100) / 100}</span>
-			<span>Zoom: {Math.round(viewport.zoom * 100) / 100}</span>
-		</div>
-	</Panel>
-	<MiniMap />
-</SvelteFlow>
+<div class="relative w-full border-2 {diagramStore.nodeDrag.isDragging ? 'border-blue-500' : ''}">
+	<div
+		class="absolute border-2 border-dashed opacity-0 transition-opacity delay-200 {diagramStore
+			.nodeDrag.isDragging && !diagramStore.nodeDrag.isInsideBox
+			? 'z-49 opacity-100!'
+			: ''} flex size-full items-center justify-center bg-background/80"
+	>
+		<p>Drag nodes into this area</p>
+	</div>
+	<div class="size-full" bind:this={diagramContainer}>
+		<SvelteFlow
+			bind:nodes={diagramStore.nodes}
+			bind:edges={diagramStore.edges}
+			fitView
+			{colorMode}
+			snapGrid={[10, 10]}
+			onpaneclick={handlePaneClick}
+			onnodeclick={handleNodeClick}
+			onedgeclick={handleEdgeClick}
+			{onbeforedelete}
+			{nodeTypes}
+			onnodedragstop={() => diagramStore.markDirty()}
+			onconnect={() => diagramStore.markDirty()}
+		>
+			<Background variant={BackgroundVariant.Dots} />
+			<Controls />
+			<Panel position="top-left">
+				<div class="flex flex-row gap-2 text-xs text-muted-foreground">
+					<span>X: {Math.round(viewport.x * 100) / 100}</span>
+					<span>Y: {Math.round(viewport.y * 100) / 100}</span>
+					<span>Zoom: {Math.round(viewport.zoom * 100) / 100}</span>
+				</div>
+			</Panel>
+			<MiniMap />
+		</SvelteFlow>
+	</div>
+</div>

@@ -1,4 +1,5 @@
-import type { Edge, Node } from '@xyflow/svelte';
+import type { Edge, Node, XYPosition } from '@xyflow/svelte';
+import { ObjectId } from 'bson';
 
 interface DiagramSelect {
 	type: 'node' | 'edge';
@@ -16,6 +17,14 @@ class DiagramStore {
 	projectId: string | null = $state(null);
 	diagramId: string | null = $state(null);
 	parentDiagramId: string | null = $state(null);
+
+	// Dragging state
+	container: HTMLElement | null = null;
+	nodeDrag = $state({ isDragging: false, isInsideBox: false });
+
+	setContainer(container: HTMLElement) {
+		this.container = container;
+	}
 
 	setContext(projectId: string, diagramId: string, parentDiagramId?: string | null) {
 		this.projectId = projectId;
@@ -62,6 +71,25 @@ class DiagramStore {
 
 	markSaved() {
 		this.isDirty = false;
+	}
+	// --- Actions ---
+	addNode(type: string, data?: Record<string, unknown>, position?: XYPosition) {
+		const { x: lastX, y: lastY } = this.lastClickPosition;
+
+		this.nodes = [
+			...this.nodes,
+			{
+				id: new ObjectId().toString(),
+				type,
+				position: position || { x: lastX, y: lastY },
+				origin: position ? [0.5, 0.5] : undefined,
+				data: { label: 'Node ' + (this.nodes.length + 1), ...data }
+			}
+		];
+
+		// avoid last click position to be same as the node position
+		this.setLastClickPosition({ x: lastX + 10, y: lastY + 10 });
+		this.markDirty();
 	}
 }
 
