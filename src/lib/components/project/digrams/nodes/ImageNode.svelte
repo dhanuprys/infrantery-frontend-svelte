@@ -7,6 +7,10 @@
 		alt: string;
 		fit: 'cover' | 'contain';
 		childDiagramId: string;
+		handlePosition?: {
+			source?: Position;
+			target?: Position;
+		};
 	};
 	export type ImageNodeType = Node<ImageNodeProps, 'number'>;
 </script>
@@ -18,19 +22,32 @@
 
 	let { id, data }: NodeProps<ImageNodeType> = $props();
 
+	let handlePosition = $derived(data.handlePosition);
 	let selected = $derived(diagramStore.activeObject?.target.id === id);
+
 	let hasChildDiagram = $derived(data.childDiagramId);
+
+	function handleClass(pos: Position | undefined, childOffset: string, labelOffset: string) {
+		if (pos === Position.Left || pos === Position.Right) {
+			if (data.label) {
+				return '';
+			}
+			return '-translate-y-1';
+		}
+		if (hasChildDiagram) return childOffset;
+		return data.label ? labelOffset : '-translate-y-0.5';
+	}
 </script>
 
 <Handle
 	type="target"
-	position={Position.Top}
-	class={hasChildDiagram ? '' : data.label ? 'translate-y-1' : '-translate-y-0.5'}
+	position={handlePosition?.target || Position.Top}
+	class={handleClass(handlePosition?.target, '', 'translate-y-1')}
 />
 <Handle
 	type="source"
-	position={Position.Bottom}
-	class={hasChildDiagram ? '-translate-y-1' : data.label ? 'translate-y-0.5' : '-translate-y-0.5'}
+	position={handlePosition?.source || Position.Bottom}
+	class={handleClass(handlePosition?.source, '-translate-y-1', 'translate-y-0.5')}
 />
 
 <Tooltip.Root>
@@ -78,7 +95,6 @@
 	.animated-border-box::before {
 		content: '';
 		position: absolute;
-		/* Buat ukuran lebih besar dari kontainer agar rotasi menutupi sudut */
 		top: -50%;
 		left: -50%;
 		width: 200%;

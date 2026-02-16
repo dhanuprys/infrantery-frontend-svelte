@@ -1,4 +1,4 @@
-import type { Edge, Node, XYPosition } from '@xyflow/svelte';
+import type { Edge, Node, Viewport, XYPosition } from '@xyflow/svelte';
 import { ObjectId } from 'bson';
 
 interface DiagramSelect {
@@ -21,6 +21,16 @@ class DiagramStore {
 	// Dragging state
 	container: HTMLElement | null = null;
 	nodeDrag = $state({ isDragging: false, isInsideBox: false });
+
+	needRerender = $state(false);
+
+	requestRerender() {
+		this.needRerender = true;
+	}
+
+	rerenderDone() {
+		this.needRerender = false;
+	}
 
 	setContainer(container: HTMLElement) {
 		this.container = container;

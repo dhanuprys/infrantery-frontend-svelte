@@ -1,11 +1,19 @@
 <script lang="ts">
 	import type { ImageNodeProps } from '$lib/components/project/digrams/nodes/ImageNode.svelte';
-	import { useSvelteFlow, type Node } from '@xyflow/svelte';
+	import { Position, useSvelteFlow, type Node } from '@xyflow/svelte';
 	import * as Field from '$lib/components/ui/field';
 	import * as Accordion from '$lib/components/ui/accordion';
 	import { Input } from '$lib/components/ui/input';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
-	import { ExternalLink, Network, ShieldCheck } from '@lucide/svelte';
+	import {
+		ExternalLink,
+		Network,
+		ShieldCheck,
+		ChevronUp,
+		ChevronDown,
+		ChevronLeft,
+		ChevronRight
+	} from '@lucide/svelte';
 	import { nodeImages } from '$lib/data/node-images';
 	import { Separator } from '$lib/components/ui/separator';
 	import Button from '$lib/components/ui/button/button.svelte';
@@ -23,7 +31,39 @@
 	let { node }: { node: Node<ImageNodeProps, 'number'> } = $props();
 	const { fitView } = useSvelteFlow();
 	let labelValue = $derived(node.data.label);
+	let sourcePosition = $derived(node.data.handlePosition?.source || Position.Bottom);
+	let targetPosition = $derived(node.data.handlePosition?.target || Position.Top);
 	let isCreatingChild = $state(false);
+
+	const positionLabels: Record<string, string> = {
+		[Position.Top]: 'T',
+		[Position.Bottom]: 'B',
+		[Position.Left]: 'L',
+		[Position.Right]: 'R'
+	};
+
+	function updateHandlePosition(handle: 'source' | 'target', position: Position) {
+		diagramStore.setNodes(
+			diagramStore.nodes.map((n) => {
+				if (n.id === node.id) {
+					return {
+						...n,
+						data: {
+							...n.data,
+							handlePosition: {
+								...((n.data as ImageNodeProps).handlePosition || {}),
+								[handle]: position
+							}
+						}
+					};
+				}
+				return n;
+			})
+		);
+		diagramStore.requestRerender();
+
+		diagramStore.markDirty();
+	}
 
 	function updateLabel(e: Event) {
 		if (labelValue.length > 20) return;
@@ -220,6 +260,99 @@
 			<Field.Label for="username">Label</Field.Label>
 			<Input id="username" bind:value={labelValue} maxlength={20} oninput={updateLabel} />
 			<Field.Description>Label for the node.</Field.Description>
+		</Field.Field>
+		<Field.Field>
+			<Field.Label>Handles</Field.Label>
+			{@const pads = [
+				{
+					label: 'Source',
+					value: sourcePosition,
+					handle: 'source' as const,
+					disabled: targetPosition
+				},
+				{
+					label: 'Target',
+					value: targetPosition,
+					handle: 'target' as const,
+					disabled: sourcePosition
+				}
+			]}
+			<div class="grid grid-cols-2 gap-4">
+				{#each pads as pad (pad.handle)}
+					<div class="flex flex-col items-center gap-1">
+						<span class="text-xs text-muted-foreground">{pad.label}</span>
+						<div class="grid grid-cols-3 grid-rows-3 place-items-center gap-0.5">
+							<div></div>
+							<button
+								type="button"
+								disabled={pad.disabled === Position.Top}
+								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
+								Position.Top
+									? 'bg-primary text-primary-foreground'
+									: pad.disabled === Position.Top
+										? 'cursor-not-allowed opacity-30'
+										: 'hover:bg-muted'}"
+								onclick={() => updateHandlePosition(pad.handle, Position.Top)}
+							>
+								<ChevronUp class="size-4" />
+							</button>
+							<div></div>
+
+							<button
+								type="button"
+								disabled={pad.disabled === Position.Left}
+								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
+								Position.Left
+									? 'bg-primary text-primary-foreground'
+									: pad.disabled === Position.Left
+										? 'cursor-not-allowed opacity-30'
+										: 'hover:bg-muted'}"
+								onclick={() => updateHandlePosition(pad.handle, Position.Left)}
+							>
+								<ChevronLeft class="size-4" />
+							</button>
+							<div
+								class="flex size-7 items-center justify-center text-[10px] font-semibold text-muted-foreground"
+							>
+								{positionLabels[pad.value]}
+							</div>
+							<button
+								type="button"
+								disabled={pad.disabled === Position.Right}
+								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
+								Position.Right
+									? 'bg-primary text-primary-foreground'
+									: pad.disabled === Position.Right
+										? 'cursor-not-allowed opacity-30'
+										: 'hover:bg-muted'}"
+								onclick={() => updateHandlePosition(pad.handle, Position.Right)}
+							>
+								<ChevronRight class="size-4" />
+							</button>
+
+							<div></div>
+							<button
+								type="button"
+								disabled={pad.disabled === Position.Bottom}
+								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
+								Position.Bottom
+									? 'bg-primary text-primary-foreground'
+									: pad.disabled === Position.Bottom
+										? 'cursor-not-allowed opacity-30'
+										: 'hover:bg-muted'}"
+								onclick={() => updateHandlePosition(pad.handle, Position.Bottom)}
+							>
+								<ChevronDown class="size-4" />
+							</button>
+							<div></div>
+						</div>
+					</div>
+				{/each}
+			</div>
+			<Field.Description>Click arrows to set handle positions.</Field.Description>
+			<Field.Description class="text-yellow-500">
+				This will trigger <span class="font-semibold">rerender</span>.
+			</Field.Description>
 		</Field.Field>
 	</Field.Group>
 

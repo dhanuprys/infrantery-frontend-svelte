@@ -18,7 +18,7 @@
 	import { mode } from 'mode-watcher';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import { nodeTypes } from '$lib/data/node-types';
-	import { afterNavigate, beforeNavigate } from '$app/navigation';
+	import { beforeNavigate } from '$app/navigation';
 	import { untrack } from 'svelte';
 
 	let diagramContainer: HTMLElement;
@@ -35,6 +35,26 @@
 	$effect(() => {
 		if (diagramContainer) {
 			untrack(() => diagramStore.setContainer(diagramContainer));
+		}
+	});
+
+	// force rerender
+	$effect(() => {
+		if (diagramStore.needRerender) {
+			untrack(() => {
+				// backup
+				const nodes = diagramStore.nodes;
+				// const edges = diagramStore.edges;
+
+				diagramStore.setNodes([]);
+				// diagramStore.setEdges([]);
+
+				setTimeout(() => {
+					diagramStore.setNodes(nodes);
+					// diagramStore.setEdges(edges);
+					diagramStore.rerenderDone();
+				}, 50);
+			});
 		}
 	});
 
@@ -116,7 +136,7 @@
 			bind:edges={diagramStore.edges}
 			fitView
 			{colorMode}
-			snapGrid={[10, 10]}
+			snapGrid={[5, 5]}
 			onpaneclick={handlePaneClick}
 			onnodeclick={handleNodeClick}
 			onedgeclick={handleEdgeClick}
