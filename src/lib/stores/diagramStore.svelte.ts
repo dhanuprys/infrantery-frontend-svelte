@@ -97,6 +97,9 @@ class DiagramStore {
 			}
 		];
 
+		// automatically select the new node
+		this.setActiveObject({ type: 'node', target: this.nodes[this.nodes.length - 1] });
+
 		// avoid last click position to be same as the node position
 		this.setLastClickPosition({ x: lastX + 10, y: lastY + 10 });
 		this.markDirty();
