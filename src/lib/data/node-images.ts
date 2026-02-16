@@ -1,10 +1,16 @@
 import CubeImage from '$lib/assets/nodes/cube.png';
+import CloudImage from '$lib/assets/nodes/cloud.png';
+import RouterImage from '$lib/assets/nodes/router.png';
 import DockerImage from '$lib/assets/nodes/docker.jpg';
+import PCImage from '$lib/assets/nodes/pc.png';
+import GitImage from '$lib/assets/nodes/git.png';
 import UbuntuImage from '$lib/assets/nodes/ubuntu.png';
 import PfSenseImage from '$lib/assets/nodes/pfsense.png';
 import PostgresImage from '$lib/assets/nodes/postgres.png';
 import SwitchImage from '$lib/assets/nodes/switch.png';
 import GrafanaImage from '$lib/assets/nodes/grafana.webp';
+import JenkinsImage from '$lib/assets/nodes/jenkins.png';
+import ServerRackImage from '$lib/assets/nodes/server-rack.png';
 
 export const nodeImages = [
 	{
@@ -12,6 +18,42 @@ export const nodeImages = [
 		src: CubeImage,
 		alt: 'Default',
 		label: 'Default'
+	},
+	{
+		id: 'cloud',
+		src: CloudImage,
+		alt: 'Cloud',
+		label: 'Cloud'
+	},
+	{
+		id: 'router',
+		src: RouterImage,
+		alt: 'Router',
+		label: 'Router'
+	},
+	{
+		id: 'pc',
+		src: PCImage,
+		alt: 'PC',
+		label: 'PC'
+	},
+	{
+		id: 'server-rack',
+		src: ServerRackImage,
+		alt: 'Server Rack',
+		label: 'Server Rack'
+	},
+	{
+		id: 'jenkins',
+		src: JenkinsImage,
+		alt: 'Jenkins',
+		label: 'Jenkins'
+	},
+	{
+		id: 'git',
+		src: GitImage,
+		alt: 'Git',
+		label: 'Git'
 	},
 	{
 		id: 'docker',
