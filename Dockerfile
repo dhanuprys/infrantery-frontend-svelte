@@ -11,9 +11,6 @@ RUN npm install -D @sveltejs/adapter-node
 # Copy source
 COPY . .
 
-# Override adapter-auto → adapter-node for production
-RUN sed -i "s|@sveltejs/adapter-auto|@sveltejs/adapter-node|g" svelte.config.js
-
 # Build the application
 RUN npm run build
 
