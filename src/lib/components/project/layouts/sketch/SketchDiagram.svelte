@@ -18,7 +18,7 @@
 	import { mode } from 'mode-watcher';
 	import { diagramStore } from '$lib/stores/diagramStore.svelte';
 	import { nodeTypes } from '$lib/data/node-types';
-	import { beforeNavigate } from '$app/navigation';
+	import { afterNavigate, beforeNavigate } from '$app/navigation';
 	import { untrack } from 'svelte';
 
 	let diagramContainer: HTMLElement;
@@ -31,7 +31,13 @@
 
 	beforeNavigate(() => {
 		diagramStore.setActiveObject(null);
-		fitDiagramView = true;
+	});
+
+	afterNavigate(() => {
+		// wait for load
+		setTimeout(() => {
+			fitDiagramView = true;
+		}, 3000);
 	});
 
 	$effect(() => {
