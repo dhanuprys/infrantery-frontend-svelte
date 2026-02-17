@@ -29,6 +29,7 @@
 				return n;
 			})
 		);
+		diagramStore.markDirty();
 	}
 
 	function updateEdgeType(newType: string) {
@@ -43,10 +44,12 @@
 				return n;
 			})
 		);
+		diagramStore.markDirty();
 	}
 
 	function deleteEdge() {
 		diagramStore.deleteEdge(edge.id);
+		diagramStore.markDirty();
 	}
 </script>
 

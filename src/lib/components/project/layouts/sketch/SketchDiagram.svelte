@@ -22,11 +22,12 @@
 	import { untrack } from 'svelte';
 
 	let diagramContainer: HTMLElement;
+	let diagramViewport = $state({ x: 20, y: 20, zoom: 1 });
+	let showDiagram = $state(true);
+	let fitDiagramView = $state(true);
 
 	let colorMode = $derived(mode.current || 'light');
 	const { screenToFlowPosition, getViewport } = useSvelteFlow();
-
-	let viewport = $derived(getViewport());
 
 	beforeNavigate(() => {
 		diagramStore.setActiveObject(null);
@@ -42,18 +43,15 @@
 	$effect(() => {
 		if (diagramStore.needRerender) {
 			untrack(() => {
-				// backup
-				const nodes = diagramStore.nodes;
-				// const edges = diagramStore.edges;
+				const backupViewport = { ...diagramViewport };
 
-				diagramStore.setNodes([]);
-				// diagramStore.setEdges([]);
-
+				showDiagram = false;
+				fitDiagramView = false;
 				setTimeout(() => {
-					diagramStore.setNodes(nodes);
-					// diagramStore.setEdges(edges);
+					diagramViewport = backupViewport;
 					diagramStore.rerenderDone();
-				}, 50);
+					showDiagram = true;
+				}, 500);
 			});
 		}
 	});
@@ -131,30 +129,40 @@
 		<p>Drag nodes into this area</p>
 	</div>
 	<div class="size-full" bind:this={diagramContainer}>
-		<SvelteFlow
-			bind:nodes={diagramStore.nodes}
-			bind:edges={diagramStore.edges}
-			fitView
-			{colorMode}
-			snapGrid={[5, 5]}
-			onpaneclick={handlePaneClick}
-			onnodeclick={handleNodeClick}
-			onedgeclick={handleEdgeClick}
-			{onbeforedelete}
-			{nodeTypes}
-			onnodedragstop={() => diagramStore.markDirty()}
-			onconnect={() => diagramStore.markDirty()}
+		<div
+			class="pointer-events-none absolute inset-0 z-50 flex items-center justify-center bg-background/80 opacity-0 transition-opacity {!showDiagram
+				? 'opacity-100'
+				: ''}"
 		>
-			<Background variant={BackgroundVariant.Dots} />
-			<Controls />
-			<Panel position="top-left">
-				<div class="flex flex-row gap-2 text-xs text-muted-foreground">
-					<span>X: {Math.round(viewport.x * 100) / 100}</span>
-					<span>Y: {Math.round(viewport.y * 100) / 100}</span>
-					<span>Zoom: {Math.round(viewport.zoom * 100) / 100}</span>
-				</div>
-			</Panel>
-			<MiniMap />
-		</SvelteFlow>
+			<p>Re-rendering...</p>
+		</div>
+		{#if showDiagram}
+			<SvelteFlow
+				bind:viewport={diagramViewport}
+				bind:nodes={diagramStore.nodes}
+				bind:edges={diagramStore.edges}
+				fitView={fitDiagramView}
+				{colorMode}
+				snapGrid={[5, 5]}
+				onpaneclick={handlePaneClick}
+				onnodeclick={handleNodeClick}
+				onedgeclick={handleEdgeClick}
+				{onbeforedelete}
+				{nodeTypes}
+				onnodedragstop={() => diagramStore.markDirty()}
+				onconnect={() => diagramStore.markDirty()}
+			>
+				<Background variant={BackgroundVariant.Dots} />
+				<Controls />
+				<Panel position="top-left">
+					<div class="flex flex-row gap-2 text-xs text-muted-foreground">
+						<span>X: {Math.round(diagramViewport.x * 100) / 100}</span>
+						<span>Y: {Math.round(diagramViewport.y * 100) / 100}</span>
+						<span>Zoom: {Math.round(diagramViewport.zoom * 100) / 100}</span>
+					</div>
+				</Panel>
+				<MiniMap />
+			</SvelteFlow>
+		{/if}
 	</div>
 </div>

@@ -12,7 +12,10 @@
 		ChevronUp,
 		ChevronDown,
 		ChevronLeft,
-		ChevronRight
+		ChevronRight,
+		ArrowLeftRight,
+		ArrowUpDown,
+		type Icon as IconType
 	} from '@lucide/svelte';
 	import { nodeImages } from '$lib/data/node-images';
 	import { Separator } from '$lib/components/ui/separator';
@@ -61,7 +64,27 @@
 			})
 		);
 		diagramStore.requestRerender();
+		diagramStore.markDirty();
+	}
 
+	function setHandlePreset(preset: 'horizontal' | 'vertical') {
+		const source = preset === 'horizontal' ? Position.Right : Position.Bottom;
+		const target = preset === 'horizontal' ? Position.Left : Position.Top;
+		diagramStore.setNodes(
+			diagramStore.nodes.map((n) => {
+				if (n.id === node.id) {
+					return {
+						...n,
+						data: {
+							...n.data,
+							handlePosition: { source, target }
+						}
+					};
+				}
+				return n;
+			})
+		);
+		diagramStore.requestRerender();
 		diagramStore.markDirty();
 	}
 
@@ -215,6 +238,26 @@
 	}
 </script>
 
+{#snippet dpadBtn(
+	pad: { value: Position; handle: 'source' | 'target'; disabled: Position },
+	pos: Position,
+	Icon: typeof IconType
+)}
+	<button
+		type="button"
+		disabled={pad.disabled === pos}
+		class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
+		pos
+			? 'bg-primary text-primary-foreground'
+			: pad.disabled === pos
+				? 'cursor-not-allowed opacity-30'
+				: 'hover:bg-muted'}"
+		onclick={() => updateHandlePosition(pad.handle, pos)}
+	>
+		<Icon class="size-4" />
+	</button>
+{/snippet}
+
 <Field.Set>
 	<Field.Group>
 		<Field.Field>
@@ -262,7 +305,33 @@
 			<Field.Description>Label for the node.</Field.Description>
 		</Field.Field>
 		<Field.Field>
-			<Field.Label>Handles</Field.Label>
+			<div class="flex items-center justify-between">
+				<Field.Label class="mb-0!">Handles Position</Field.Label>
+				<div class="flex gap-1">
+					<button
+						type="button"
+						title="Left → Right"
+						class="flex size-6 items-center justify-center rounded border transition-colors {sourcePosition ===
+							Position.Right && targetPosition === Position.Left
+							? 'bg-primary text-primary-foreground'
+							: 'hover:bg-muted'}"
+						onclick={() => setHandlePreset('horizontal')}
+					>
+						<ArrowLeftRight class="size-3.5" />
+					</button>
+					<button
+						type="button"
+						title="Top → Bottom"
+						class="flex size-6 items-center justify-center rounded border transition-colors {sourcePosition ===
+							Position.Bottom && targetPosition === Position.Top
+							? 'bg-primary text-primary-foreground'
+							: 'hover:bg-muted'}"
+						onclick={() => setHandlePreset('vertical')}
+					>
+						<ArrowUpDown class="size-3.5" />
+					</button>
+				</div>
+			</div>
 			{@const pads = [
 				{
 					label: 'Source',
@@ -283,73 +352,22 @@
 						<span class="text-xs text-muted-foreground">{pad.label}</span>
 						<div class="grid grid-cols-3 grid-rows-3 place-items-center gap-0.5">
 							<div></div>
-							<button
-								type="button"
-								disabled={pad.disabled === Position.Top}
-								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
-								Position.Top
-									? 'bg-primary text-primary-foreground'
-									: pad.disabled === Position.Top
-										? 'cursor-not-allowed opacity-30'
-										: 'hover:bg-muted'}"
-								onclick={() => updateHandlePosition(pad.handle, Position.Top)}
-							>
-								<ChevronUp class="size-4" />
-							</button>
+							{@render dpadBtn(pad, Position.Top, ChevronUp)}
 							<div></div>
-
-							<button
-								type="button"
-								disabled={pad.disabled === Position.Left}
-								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
-								Position.Left
-									? 'bg-primary text-primary-foreground'
-									: pad.disabled === Position.Left
-										? 'cursor-not-allowed opacity-30'
-										: 'hover:bg-muted'}"
-								onclick={() => updateHandlePosition(pad.handle, Position.Left)}
-							>
-								<ChevronLeft class="size-4" />
-							</button>
+							{@render dpadBtn(pad, Position.Left, ChevronLeft)}
 							<div
 								class="flex size-7 items-center justify-center text-[10px] font-semibold text-muted-foreground"
 							>
 								{positionLabels[pad.value]}
 							</div>
-							<button
-								type="button"
-								disabled={pad.disabled === Position.Right}
-								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
-								Position.Right
-									? 'bg-primary text-primary-foreground'
-									: pad.disabled === Position.Right
-										? 'cursor-not-allowed opacity-30'
-										: 'hover:bg-muted'}"
-								onclick={() => updateHandlePosition(pad.handle, Position.Right)}
-							>
-								<ChevronRight class="size-4" />
-							</button>
-
+							{@render dpadBtn(pad, Position.Right, ChevronRight)}
 							<div></div>
-							<button
-								type="button"
-								disabled={pad.disabled === Position.Bottom}
-								class="flex size-7 items-center justify-center rounded border transition-colors {pad.value ===
-								Position.Bottom
-									? 'bg-primary text-primary-foreground'
-									: pad.disabled === Position.Bottom
-										? 'cursor-not-allowed opacity-30'
-										: 'hover:bg-muted'}"
-								onclick={() => updateHandlePosition(pad.handle, Position.Bottom)}
-							>
-								<ChevronDown class="size-4" />
-							</button>
+							{@render dpadBtn(pad, Position.Bottom, ChevronDown)}
 							<div></div>
 						</div>
 					</div>
 				{/each}
 			</div>
-			<Field.Description>Click arrows to set handle positions.</Field.Description>
 			<Field.Description class="text-yellow-500">
 				This will trigger <span class="font-semibold">rerender</span>.
 			</Field.Description>
