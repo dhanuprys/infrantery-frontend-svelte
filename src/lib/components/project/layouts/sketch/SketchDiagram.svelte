@@ -149,6 +149,7 @@
 				bind:nodes={diagramStore.nodes}
 				bind:edges={diagramStore.edges}
 				fitView={fitDiagramView}
+				elevateNodesOnSelect={false}
 				{colorMode}
 				snapGrid={[5, 5]}
 				onpaneclick={handlePaneClick}

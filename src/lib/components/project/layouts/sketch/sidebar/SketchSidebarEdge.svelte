@@ -47,6 +47,21 @@
 		diagramStore.markDirty();
 	}
 
+	function updateAnimated(animated: boolean) {
+		diagramStore.setEdges(
+			diagramStore.edges.map((n) => {
+				if (n.id === edge.id) {
+					return {
+						...n,
+						animated
+					};
+				}
+				return n;
+			})
+		);
+		diagramStore.markDirty();
+	}
+
 	function deleteEdge() {
 		diagramStore.deleteEdge(edge.id);
 		diagramStore.markDirty();
@@ -76,6 +91,19 @@
 						</Select.Content>
 					</Select.Root>
 					<Field.Description>Edge type.</Field.Description>
+				</Field.Field>
+				<Field.Field>
+					<div class="flex items-center gap-2">
+						<input
+							type="checkbox"
+							id="animated"
+							checked={edge.animated || false}
+							onchange={(e) => updateAnimated((e.target as HTMLInputElement).checked)}
+							class="h-4 w-4 rounded border-gray-300"
+						/>
+						<Field.Label for="animated" class="mb-0!">Animated</Field.Label>
+					</div>
+					<Field.Description>Show animation on the edge.</Field.Description>
 				</Field.Field>
 			</Field.Group>
 
