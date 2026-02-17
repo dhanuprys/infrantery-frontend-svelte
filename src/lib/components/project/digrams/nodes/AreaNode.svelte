@@ -31,7 +31,7 @@
 		</div>
 	{/if}
 	<div
-		class="relative flex flex-1 items-center justify-center overflow-hidden rounded-b opacity-40"
+		class="pointer-events-none relative flex flex-1 items-center justify-center overflow-hidden rounded-b opacity-40"
 		style="background-color: {data.hexColor ?? 'var(--background)'}"
 	></div>
 </div>

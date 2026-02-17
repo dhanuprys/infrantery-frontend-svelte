@@ -10,6 +10,7 @@
 		Panel,
 		SvelteFlow,
 		useSvelteFlow,
+		type DefaultEdgeOptions,
 		type Edge,
 		type Node,
 		type OnBeforeDelete
@@ -28,6 +29,10 @@
 
 	let colorMode = $derived(mode.current || 'light');
 	const { screenToFlowPosition, getViewport } = useSvelteFlow();
+
+	const defaultEdgeOptions: DefaultEdgeOptions = {
+		zIndex: 5
+	};
 
 	beforeNavigate(() => {
 		diagramStore.setActiveObject(null);
@@ -150,6 +155,7 @@
 				bind:edges={diagramStore.edges}
 				fitView={fitDiagramView}
 				elevateNodesOnSelect={false}
+				{defaultEdgeOptions}
 				{colorMode}
 				snapGrid={[5, 5]}
 				onpaneclick={handlePaneClick}
