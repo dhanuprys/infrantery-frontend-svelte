@@ -11,9 +11,11 @@
 		LayoutGrid,
 		Clock,
 		ShieldCheck,
-		MoreVertical
+		MoreVertical,
+		Upload
 	} from '@lucide/svelte';
 	import ProjectCreateDialog from '$lib/components/projects/project-create-dialog.svelte';
+	import RestoreDialog from '$lib/components/projects/restore-dialog.svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Badge } from '$lib/components/ui/badge';
 	import { Input } from '$lib/components/ui/input';
@@ -22,6 +24,7 @@
 	let loading = $state(true);
 	let error = $state<string | null>(null);
 	let isCreateDialogOpen = $state(false);
+	let isRestoreDialogOpen = $state(false);
 	let searchQuery = $state('');
 
 	async function loadProjects() {
@@ -68,6 +71,10 @@
 					bind:value={searchQuery}
 				/>
 			</div>
+			<Button variant="outline" onclick={() => (isRestoreDialogOpen = true)}>
+				<Upload class="mr-2 h-4 w-4" />
+				Restore
+			</Button>
 			<Button onclick={() => (isCreateDialogOpen = true)}>
 				<Plus class="mr-2 h-4 w-4" />
 				New Project
@@ -184,3 +191,4 @@
 </div>
 
 <ProjectCreateDialog bind:open={isCreateDialogOpen} onSuccess={handleCreateSuccess} />
+<RestoreDialog bind:open={isRestoreDialogOpen} onSuccess={handleCreateSuccess} />

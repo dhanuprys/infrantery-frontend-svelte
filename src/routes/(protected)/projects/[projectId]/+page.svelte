@@ -14,7 +14,8 @@
 		Clock,
 		ChevronRight,
 		ArrowLeft,
-		Users
+		Users,
+		Download
 	} from '@lucide/svelte';
 	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { Badge } from '$lib/components/ui/badge';
@@ -24,6 +25,7 @@
 	import ProjectHeader from '$lib/components/project/layouts/ProjectHeader.svelte';
 	import ProjectUpdateDialog from '$lib/components/projects/project-update-dialog.svelte';
 	import CreateDiagramDialog from '$lib/components/project/dialogs/CreateDiagramDialog.svelte';
+	import BackupDialog from '$lib/components/projects/backup-dialog.svelte';
 	import { goto } from '$app/navigation';
 	import { cryptoService } from '$lib/services/cryptoService';
 	import { projectSessionStore } from '$lib/stores/projectSessionStore.svelte';
@@ -36,6 +38,7 @@
 	let error = $state<string | null>(null);
 	let isUpdateDialogOpen = $state(false);
 	let createDiagramDialogOpen = $state(false);
+	let isBackupDialogOpen = $state(false);
 
 	async function handleCreateDiagram(name: string, description: string) {
 		try {
@@ -152,6 +155,10 @@
 					<FileText class="mr-2 h-4 w-4" />
 					Go to Notes
 				</Button>
+				<Button variant="outline" onclick={() => (isBackupDialogOpen = true)}>
+					<Download class="mr-2 h-4 w-4" />
+					Backup
+				</Button>
 				<Button onclick={() => (createDiagramDialogOpen = true)}>
 					<Plus class="mr-2 h-4 w-4" />
 					New Diagram
@@ -245,3 +252,4 @@
 
 <ProjectUpdateDialog bind:open={isUpdateDialogOpen} {project} onSuccess={handleUpdateSuccess} />
 <CreateDiagramDialog bind:open={createDiagramDialogOpen} onsubmit={handleCreateDiagram} />
+<BackupDialog bind:open={isBackupDialogOpen} {projectId} projectName={project?.name || 'project'} />

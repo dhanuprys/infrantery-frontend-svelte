@@ -31,6 +31,7 @@
 
 	beforeNavigate(() => {
 		diagramStore.setActiveObject(null);
+		fitDiagramView = true;
 	});
 
 	$effect(() => {
